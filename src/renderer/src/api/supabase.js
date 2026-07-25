@@ -263,13 +263,75 @@ export async function getBudgets(userId, month, year) {
     .from('budgets')
     .select('*')
     .eq('user_id', userId)
-    .eq('month', month)
-    .eq('year', year)
+
   if (error) throw error
-  return data
+
+  const allBudgets = (data || []).map((b) => ({
+    ...b,
+    is_recurring: b.is_recurring !== undefined ? !!b.is_recurring : true
+  }))
+
+  const targetKey = `${year}-${String(month).padStart(2, '0')}`
+
+  // Group by category
+  const byCat = {}
+  for (const b of allBudgets) {
+    const key = b.category
+    if (!byCat[key]) byCat[key] = []
+    byCat[key].push(b)
+  }
+
+  const activeBudgets = []
+
+  for (const catId in byCat) {
+    const list = byCat[catId]
+
+    // 1. Check for exact match in target month/year
+    const exact = list.find((b) => Number(b.month) === Number(month) && Number(b.year) === Number(year))
+
+    if (exact) {
+      activeBudgets.push(exact)
+    } else {
+      // 2. Check for recurring budgets from prior months
+      const recurring = list.filter((b) => {
+        if (!b.is_recurring) return false
+        const bKey = `${b.year}-${String(b.month).padStart(2, '0')}`
+        return bKey <= targetKey
+      })
+
+      if (recurring.length > 0) {
+        recurring.sort((a, b) => {
+          const keyA = `${a.year}-${String(a.month).padStart(2, '0')}`
+          const keyB = `${b.year}-${String(b.month).padStart(2, '0')}`
+          return keyB.localeCompare(keyA)
+        })
+        activeBudgets.push({
+          ...recurring[0],
+          is_inherited: true
+        })
+      }
+    }
+  }
+
+  return activeBudgets
 }
 
-export async function setBudget(userId, category, amount, month, year) {
+export async function setBudget(userId, category, amount, month, year, is_recurring = true) {
+  // Upsert with is_recurring field
+  const payload = { user_id: userId, category, amount, month, year, is_recurring }
+
+  try {
+    const { data, error } = await supabase
+      .from('budgets')
+      .upsert(payload, { onConflict: 'user_id,category,month,year' })
+      .select()
+      .single()
+
+    if (!error) return data
+  } catch (e) {
+    // Fallback if column does not exist yet
+  }
+
   const { data, error } = await supabase
     .from('budgets')
     .upsert(
@@ -278,6 +340,7 @@ export async function setBudget(userId, category, amount, month, year) {
     )
     .select()
     .single()
+
   if (error) throw error
   return data
 }

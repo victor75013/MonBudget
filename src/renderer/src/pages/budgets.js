@@ -8,7 +8,7 @@ import {
   formatMonthYear,
   getCurrentMonthYear,
   getCategoryById,
-  CATEGORIES
+  EXPENSE_CATEGORIES
 } from '../utils/helpers.js'
 import { toast } from '../components/toast.js'
 
@@ -60,7 +60,7 @@ async function loadBudgets(user) {
   try {
     const [budgets, expenses] = await Promise.all([
       getBudgets(user.id, currentMonth, currentYear),
-      getExpenses(user.id, { month: currentMonth, year: currentYear })
+      getExpenses(user.id, { month: currentMonth, year: currentYear, type: 'expense' })
     ])
 
     const budgetMap = {}
@@ -111,25 +111,29 @@ async function loadBudgets(user) {
       summaryEl.innerHTML = ''
     }
 
-    // Cards
+    // Cards (Uniquement les catégories de DÉPENSES)
     const contentEl = document.getElementById('budgets-content')
     contentEl.innerHTML = `
       <div class="budgets-grid">
-        ${CATEGORIES.map((cat) => {
+        ${EXPENSE_CATEGORIES.map((cat) => {
           const budget = budgetMap[cat.id]
           const spent = spentMap[cat.id] || 0
           const budgetAmount = budget ? Number(budget.amount) : 0
           const pct = budgetAmount > 0 ? Math.min(100, (spent / budgetAmount) * 100) : 0
           const fillClass = pct >= 100 ? 'danger' : pct >= 80 ? 'warning' : ''
+          const isRecurring = budget && budget.is_recurring !== false
 
           return `
           <div class="budget-card">
             <div class="budget-card-header">
-              <div class="budget-cat-icon" style="background: ${cat.bg}; color: ${cat.color}">
-                ${cat.emoji}
+              <div class="budget-cat-icon" style="background: ${cat.bg}; color: ${cat.color}; font-weight: 700; font-size: 0.85rem;">
+                ${cat.label.substring(0, 2).toUpperCase()}
               </div>
               <div class="budget-card-info">
-                <div class="budget-card-name">${cat.label}</div>
+                <div class="budget-card-name" style="display: flex; align-items: center; gap: 6px;">
+                  <span>${cat.label}</span>
+                  ${budgetAmount > 0 && isRecurring ? `<span style="font-size: 0.65rem; background: var(--bg-tertiary); border: 1px solid var(--border-color); padding: 1px 5px; border-radius: 4px; color: var(--accent-primary);">Fixe</span>` : ''}
+                </div>
                 <div class="budget-card-amounts">
                   <span>${formatCurrency(spent)}</span>
                   ${budgetAmount > 0 ? ` / ${formatCurrency(budgetAmount)}` : ' · <span class="no-budget-badge">Pas de budget</span>'}
@@ -159,7 +163,7 @@ async function loadBudgets(user) {
     contentEl.querySelectorAll('.budget-card-edit').forEach((btn) => {
       btn.addEventListener('click', () => {
         const catId = btn.dataset.cat
-        const cat = getCategoryById(catId)
+        const cat = getCategoryById(catId, 'expense')
         const existing = budgetMap[catId]
         showBudgetEditor(cat, existing, user)
       })
@@ -180,20 +184,31 @@ function showBudgetEditor(cat, existing, user) {
   overlay.className = 'modal-overlay'
   overlay.id = 'budget-editor-overlay'
   overlay.innerHTML = `
-    <div class="modal" style="max-width: 380px;">
+    <div class="modal" style="max-width: 400px;">
       <div class="modal-header">
         <div class="modal-title">Budget ${cat.label}</div>
         <button class="modal-close" id="budget-modal-close">✕</button>
       </div>
       <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 16px;">
-        Définissez votre budget mensuel pour ${cat.label.toLowerCase()} — ${formatMonthYear(currentMonth, currentYear)}.
+        Définissez votre budget mensuel pour <strong>${cat.label}</strong> — ${formatMonthYear(currentMonth, currentYear)}.
       </p>
       <div class="form-group">
         <label class="form-label">Montant du budget (€)</label>
-        <input class="form-input" type="number" id="budget-amount" placeholder="0.00"
+        <input class="form-input" type="number" id="budget-amount" placeholder="Ex: 300"
           step="0.01" min="0" value="${existing ? existing.amount : ''}" />
-        <div class="form-hint">Laissez vide ou 0 pour supprimer le budget.</div>
+        <div class="form-hint">Laissez vide ou à 0 pour supprimer ce budget.</div>
       </div>
+
+      <div class="form-group" style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; margin-top: 14px;">
+        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.85rem; font-weight: 500;">
+          <input type="checkbox" id="budget-recurring" ${!existing || existing.is_recurring !== false ? 'checked' : ''} style="width: 18px; height: 18px; cursor: pointer;" />
+          <span>Budget mensuel fixe / récurrent</span>
+        </label>
+        <div class="form-hint" style="margin-top: 4px; margin-left: 28px;">
+          Se reconduit automatiquement chaque mois sans devoir le ressaisir.
+        </div>
+      </div>
+
       <div id="budget-editor-error" class="auth-error"></div>
       <div class="modal-footer">
         <button class="btn btn-secondary" id="budget-cancel">Annuler</button>
@@ -204,11 +219,10 @@ function showBudgetEditor(cat, existing, user) {
 
   document.body.appendChild(overlay)
   requestAnimationFrame(() => overlay.classList.add('show'))
-  document.getElementById('budget-amount').focus()
 
-  function close() {
+  const close = () => {
     overlay.classList.remove('show')
-    setTimeout(() => overlay.remove(), 300)
+    setTimeout(() => overlay.remove(), 200)
   }
 
   document.getElementById('budget-modal-close').addEventListener('click', close)
@@ -216,31 +230,31 @@ function showBudgetEditor(cat, existing, user) {
   overlay.addEventListener('click', (e) => { if (e.target === overlay) close() })
 
   document.getElementById('budget-save').addEventListener('click', async () => {
-    const amountVal = document.getElementById('budget-amount').value
-    const amount = parseFloat(amountVal)
+    const amtVal = document.getElementById('budget-amount').value
+    const isRecurring = document.getElementById('budget-recurring').checked
+    const errEl = document.getElementById('budget-editor-error')
     const saveBtn = document.getElementById('budget-save')
-    const errorEl = document.getElementById('budget-editor-error')
+
+    const amount = parseFloat(amtVal)
 
     saveBtn.disabled = true
     saveBtn.textContent = 'Enregistrement...'
-    errorEl.classList.remove('show')
 
     try {
-      if (!amountVal || amount <= 0) {
-        // Delete budget if exists
+      if (!amtVal || isNaN(amount) || amount <= 0) {
         if (existing) {
           await deleteBudget(existing.id)
-          toast.info(`Budget ${cat.label} supprimé`)
+          toast.success('Budget supprimé !')
         }
       } else {
-        await setBudget(user.id, cat.id, amount, currentMonth, currentYear)
-        toast.success(`Budget ${cat.label} enregistré !`)
+        await setBudget(user.id, cat.id, amount, currentMonth, currentYear, isRecurring)
+        toast.success('Budget enregistré !')
       }
       close()
-      await loadBudgets(user)
+      loadBudgets(user)
     } catch (err) {
-      errorEl.textContent = err.message || 'Erreur lors de la sauvegarde'
-      errorEl.classList.add('show')
+      errEl.textContent = err.message || 'Erreur lors de l’enregistrement du budget.'
+      errEl.style.display = 'block'
       saveBtn.disabled = false
       saveBtn.textContent = 'Enregistrer'
     }
