@@ -89,8 +89,16 @@ export function showExpenseModal({ user, expense = null, defaultType = 'expense'
           <span>Opération fixe / récurrente (tous les mois)</span>
         </label>
         <div class="form-hint" style="margin-top: 4px; margin-left: 28px;">
-          Ex: Loyer, abonnement, salaire fixe... Sera prise en compte chaque mois.
+          Ex: Loyer, abonnement, salaire fixe... Sera prise en compte uniquement à partir du mois sélectionné.
         </div>
+        ${isEdit && expense?.is_recurring ? `
+          <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border-color); margin-left: 28px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.8rem; color: var(--text-secondary);">
+              <input type="checkbox" id="exp-keep-history" checked style="width: 16px; height: 16px; cursor: pointer;" />
+              <span>Conserver l'ancien montant pour l'historique des mois passés</span>
+            </label>
+          </div>
+        ` : ''}
       </div>
 
       <div class="form-group">
@@ -188,7 +196,26 @@ export function showExpenseModal({ user, expense = null, defaultType = 'expense'
     saveBtn.textContent = 'Enregistrement...'
 
     try {
-      if (isEdit) {
+      const keepHistoryInput = document.getElementById('exp-keep-history')
+      const shouldKeepHistory = keepHistoryInput && keepHistoryInput.checked
+
+      if (isEdit && expense.is_recurring && is_recurring && shouldKeepHistory && amount !== Number(expense.amount)) {
+        // 1. Désactiver la récurrence sur l'ancienne transaction (l'ancien montant reste figé dans l'historique des mois passés)
+        await updateExpense(expense.id, { is_recurring: false })
+
+        // 2. Créer la nouvelle transaction récurrente avec le nouveau montant à partir de cette nouvelle date
+        await addExpense({
+          user_id: user.id,
+          amount,
+          description,
+          category,
+          date,
+          type: currentType,
+          is_recurring: true,
+          note
+        })
+        toast.success('Nouveau montant récurrent appliqué à partir de cette date !')
+      } else if (isEdit) {
         await updateExpense(expense.id, {
           amount,
           description,

@@ -168,9 +168,12 @@ export async function getExpenses(userId, options = {}) {
     const endYear = options.month === 12 ? options.year + 1 : options.year
     const end = `${endYear}-${String(endMonth).padStart(2, '0')}-01`
 
-    // Si on cherche par mois, on inclut aussi les opérations récurrentes fixes (is_recurring = true)
+    // RÈGLE MÉTIER IMPORTANTE :
+    // - Les transactions ponctuelles (is_recurring=false) doivent appartenir exactement au mois [start, end[.
+    // - Les transactions fixes (is_recurring=true) s'appliquent SEULEMENT à partir du mois de leur date (date < end).
+    //   Elles N'IMPACTENT PAS les mois antérieurs à leur date de création !
     if (options.includeRecurring !== false) {
-      query = query.or(`and(date.gte.${start},date.lt.${end}),is_recurring.eq.true`)
+      query = query.or(`and(is_recurring.eq.false,date.gte.${start},date.lt.${end}),and(is_recurring.eq.true,date.lt.${end})`)
     } else {
       query = query.gte('date', start).lt('date', end)
     }
