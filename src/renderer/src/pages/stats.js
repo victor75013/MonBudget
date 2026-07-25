@@ -21,7 +21,7 @@ export async function renderStats(container, user) {
   container.innerHTML = `
     <div class="page-container fade-in">
       <div class="section-header">
-        <h2 class="section-title">📊 Statistiques — ${year}</h2>
+        <h2 class="section-title">Statistiques — ${year}</h2>
       </div>
 
       <!-- Yearly Overview -->
@@ -228,20 +228,20 @@ function renderYearlySummary(yearlyData) {
   el.innerHTML = `
     <div style="display: flex; flex-direction: column; gap: 12px; padding-top: 4px;">
       <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-tertiary); border-radius: 10px;">
-        <div style="font-size: 0.85rem; color: var(--text-secondary);">💰 Total ${new Date().getFullYear()}</div>
+        <div style="font-size: 0.85rem; color: var(--text-secondary);">Total ${new Date().getFullYear()}</div>
         <div style="font-weight: 700; color: var(--text-primary);">${formatCurrency(yearTotal)}</div>
       </div>
       <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-tertiary); border-radius: 10px;">
-        <div style="font-size: 0.85rem; color: var(--text-secondary);">📋 Transactions</div>
+        <div style="font-size: 0.85rem; color: var(--text-secondary);">Transactions</div>
         <div style="font-weight: 700; color: var(--text-primary);">${yearCount}</div>
       </div>
       <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-tertiary); border-radius: 10px;">
-        <div style="font-size: 0.85rem; color: var(--text-secondary);">📅 Moyenne mensuelle</div>
+        <div style="font-size: 0.85rem; color: var(--text-secondary);">Moyenne mensuelle</div>
         <div style="font-weight: 700; color: var(--text-primary);">${formatCurrency(avg)}</div>
       </div>
       ${maxMonth && maxMonth.total > 0 ? `
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-tertiary); border-radius: 10px;">
-          <div style="font-size: 0.85rem; color: var(--text-secondary);">🔝 Mois le plus élevé</div>
+          <div style="font-size: 0.85rem; color: var(--text-secondary);">Mois le plus élevé</div>
           <div style="font-weight: 700; color: var(--accent-danger);">${getMonthName(maxMonth.month, maxMonth.year)} (${formatCurrency(maxMonth.total)})</div>
         </div>
       ` : ''}

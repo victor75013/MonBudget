@@ -26,9 +26,9 @@ export function renderNavbar(container, user) {
         <div class="dropdown">
           <div class="navbar-avatar" id="navbar-avatar-el" title="${username}">${initial}</div>
           <div class="dropdown-menu" id="user-dropdown">
-            <div class="dropdown-item" data-nav="/profile">👤 Mon profil</div>
+            <div class="dropdown-item" data-nav="/profile">Mon profil</div>
             <div class="dropdown-divider"></div>
-            <div class="dropdown-item danger" id="logout-btn">🚪 Déconnexion</div>
+            <div class="dropdown-item danger" id="logout-btn">Déconnexion</div>
           </div>
         </div>
       </div>

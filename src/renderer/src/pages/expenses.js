@@ -25,7 +25,7 @@ export async function renderExpenses(container, user) {
   container.innerHTML = `
     <div class="page-container fade-in">
       <div class="expenses-toolbar">
-        <h2>💸 Mes dépenses</h2>
+        <h2>Mes dépenses</h2>
         <button class="btn btn-primary" id="add-expense-btn">+ Ajouter</button>
       </div>
 

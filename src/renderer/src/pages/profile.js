@@ -13,7 +13,7 @@ export async function renderProfile(container, user) {
   container.innerHTML = `
     <div class="page-container fade-in">
       <div class="section-header">
-        <h2 class="section-title">👤 Profil</h2>
+        <h2 class="section-title">Profil</h2>
       </div>
 
       <div class="profile-grid">
@@ -40,7 +40,7 @@ export async function renderProfile(container, user) {
         <div style="display: flex; flex-direction: column; gap: 16px;">
           <!-- Edit profile -->
           <div class="settings-card">
-            <h3>✏️ Modifier le profil</h3>
+            <h3>Modifier le profil</h3>
             <div id="profile-form-error" class="auth-error"></div>
             <div class="form-group">
               <label class="form-label">Nom d'utilisateur</label>
@@ -64,16 +64,16 @@ export async function renderProfile(container, user) {
 
           <!-- Export -->
           <div class="settings-card">
-            <h3>📤 Export des données</h3>
+            <h3>Export des données</h3>
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.6;">
               Exportez toutes vos dépenses au format CSV pour les utiliser dans Excel ou Google Sheets.
             </p>
-            <button class="btn btn-secondary" id="export-csv-btn">📥 Exporter en CSV</button>
+            <button class="btn btn-secondary" id="export-csv-btn">Exporter en CSV</button>
           </div>
 
           <!-- Account info -->
           <div class="settings-card">
-            <h3>ℹ️ Informations du compte</h3>
+            <h3>Informations du compte</h3>
             <div style="display: flex; flex-direction: column; gap: 8px;">
               <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
                 <span style="color: var(--text-secondary);">Email</span>

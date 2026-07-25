@@ -22,7 +22,7 @@ export async function renderBudgets(container, user) {
   container.innerHTML = `
     <div class="page-container fade-in">
       <div class="budgets-toolbar">
-        <h2>🎯 Mes budgets</h2>
+        <h2>Mes budgets</h2>
         <div class="period-selector">
           <button id="budget-prev-month">◀</button>
           <div class="period-label" id="budget-period-label">${formatMonthYear(month, year)}</div>
@@ -182,7 +182,7 @@ function showBudgetEditor(cat, existing, user) {
   overlay.innerHTML = `
     <div class="modal" style="max-width: 380px;">
       <div class="modal-header">
-        <div class="modal-title">${cat.emoji} Budget ${cat.label}</div>
+        <div class="modal-title">Budget ${cat.label}</div>
         <button class="modal-close" id="budget-modal-close">✕</button>
       </div>
       <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 16px;">

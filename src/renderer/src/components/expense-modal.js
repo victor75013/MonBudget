@@ -29,7 +29,7 @@ export function showExpenseModal({ user, expense = null, onSaved }) {
   overlay.innerHTML = `
     <div class="modal">
       <div class="modal-header">
-        <div class="modal-title">${isEdit ? '✏️ Modifier la dépense' : '➕ Nouvelle dépense'}</div>
+        <div class="modal-title">${isEdit ? 'Modifier la dépense' : 'Nouvelle dépense'}</div>
         <button class="modal-close" id="expense-modal-close">✕</button>
       </div>
 
