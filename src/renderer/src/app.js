@@ -15,6 +15,7 @@ import { toast } from './components/toast.js'
 import { renderAuth } from './pages/auth.js'
 import { renderHome } from './pages/home.js'
 import { renderExpenses } from './pages/expenses.js'
+import { renderIncomes } from './pages/incomes.js'
 import { renderBudgets } from './pages/budgets.js'
 import { renderStats } from './pages/stats.js'
 import { renderProfile } from './pages/profile.js'
@@ -65,11 +66,11 @@ async function init() {
     })
     .on('/expenses', async () => {
       updateActiveNav()
-      await renderExpenses(contentContainer, currentUser, 'expense')
+      await renderExpenses(contentContainer, currentUser)
     })
     .on('/incomes', async () => {
       updateActiveNav()
-      await renderExpenses(contentContainer, currentUser, 'income')
+      await renderIncomes(contentContainer, currentUser)
     })
     .on('/budgets', async () => {
       updateActiveNav()
