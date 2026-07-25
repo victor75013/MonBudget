@@ -35,14 +35,20 @@ export async function renderHome(container, user) {
 
       <div id="stats-grid-container">
         <div class="stats-grid">
-          ${[1, 2, 3, 4].map(() => `<div class="stat-card skeleton" style="height: 110px;"></div>`).join('')}
+          ${[1, 2, 3, 4, 5].map(() => `<div class="stat-card skeleton" style="height: 110px;"></div>`).join('')}
         </div>
       </div>
 
       <div class="dashboard-grid">
         <div class="chart-container" id="donut-container">
-          <div class="chart-title">Répartition par catégorie</div>
-          <div style="position: relative; height: 220px; display: flex; align-items: center; justify-content: center;">
+          <div class="chart-title" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+            <span>Répartition par catégorie</span>
+            <div style="display: flex; gap: 4px; background: var(--bg-tertiary); padding: 3px; border-radius: 8px; font-size: 0.75rem;">
+              <button id="chart-toggle-expense" class="btn btn-primary btn-sm" style="padding: 3px 10px; font-size: 0.75rem;">Dépenses</button>
+              <button id="chart-toggle-income" class="btn btn-secondary btn-sm" style="padding: 3px 10px; font-size: 0.75rem;">Revenus</button>
+            </div>
+          </div>
+          <div style="position: relative; height: 210px; display: flex; align-items: center; justify-content: center; margin-top: 10px;">
             <canvas id="donut-chart"></canvas>
           </div>
           <div id="donut-legend" class="category-legend"></div>
@@ -80,7 +86,27 @@ export async function renderHome(container, user) {
     const stats = await getMonthStats(user.id, month, year)
     renderStats(stats)
     renderRecentExpenses(stats.allItems.slice(0, 6), user, container)
-    renderDonutChart(stats.expenseByCategory, stats.totalExpense)
+
+    let activeChartType = 'expense'
+    renderDonutChart(stats.expenseByCategory, stats.totalExpense, 'expense')
+
+    const btnExp = document.getElementById('chart-toggle-expense')
+    const btnInc = document.getElementById('chart-toggle-income')
+
+    if (btnExp && btnInc) {
+      btnExp.addEventListener('click', () => {
+        activeChartType = 'expense'
+        btnExp.className = 'btn btn-primary btn-sm'
+        btnInc.className = 'btn btn-secondary btn-sm'
+        renderDonutChart(stats.expenseByCategory, stats.totalExpense, 'expense')
+      })
+      btnInc.addEventListener('click', () => {
+        activeChartType = 'income'
+        btnExp.className = 'btn btn-secondary btn-sm'
+        btnInc.className = 'btn btn-teal btn-sm'
+        renderDonutChart(stats.incomeByCategory, stats.totalIncome, 'income')
+      })
+    }
   } catch (err) {
     console.error('Dashboard error:', err)
   }
@@ -91,16 +117,16 @@ function renderStats(stats) {
   const balanceSign = stats.netBalance > 0 ? '+' : ''
 
   document.getElementById('stats-grid-container').innerHTML = `
-    <div class="stats-grid">
+    <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
       <div class="stat-card" style="--card-accent: var(--accent-secondary)">
         <div class="stat-card-label">Revenus ce mois</div>
         <div class="stat-card-value" style="color: var(--accent-secondary)">+${formatCurrency(stats.totalIncome)}</div>
-        <div class="stat-card-sub">dont ${formatCurrency(stats.fixedIncome)} fixes</div>
+        <div class="stat-card-sub">${stats.incomes.length} transaction${stats.incomes.length > 1 ? 's' : ''}</div>
       </div>
       <div class="stat-card" style="--card-accent: var(--accent-danger)">
         <div class="stat-card-label">Dépenses ce mois</div>
         <div class="stat-card-value" style="color: var(--accent-danger)">-${formatCurrency(stats.totalExpense)}</div>
-        <div class="stat-card-sub">dont ${formatCurrency(stats.fixedExpenses)} fixes</div>
+        <div class="stat-card-sub">${stats.expenses.length} transaction${stats.expenses.length > 1 ? 's' : ''}</div>
       </div>
       <div class="stat-card" style="--card-accent: ${balanceColor}">
         <div class="stat-card-label">Solde net</div>
@@ -108,6 +134,11 @@ function renderStats(stats) {
           ${balanceSign}${formatCurrency(stats.netBalance)}
         </div>
         <div class="stat-card-sub">${stats.netBalance >= 0 ? 'Capacité d\'épargne' : 'Déficit ce mois'}</div>
+      </div>
+      <div class="stat-card" style="--card-accent: var(--accent-secondary)">
+        <div class="stat-card-label">Revenus fixes</div>
+        <div class="stat-card-value" style="color: var(--accent-secondary)">+${formatCurrency(stats.fixedIncome)}</div>
+        <div class="stat-card-sub">Entrées récurrentes</div>
       </div>
       <div class="stat-card" style="--card-accent: var(--accent-primary)">
         <div class="stat-card-label">Charges fixes</div>
@@ -163,7 +194,7 @@ function renderRecentExpenses(expenses, user, container) {
     .join('')
 }
 
-function renderDonutChart(byCategory, total) {
+function renderDonutChart(byCategory, total, type = 'expense') {
   const canvas = document.getElementById('donut-chart')
   const legendEl = document.getElementById('donut-legend')
   if (!canvas) return
@@ -173,27 +204,33 @@ function renderDonutChart(byCategory, total) {
     chartInstance = null
   }
 
-  if (total === 0) {
-    canvas.parentElement.innerHTML = `
-      <div class="empty-state" style="padding: 24px;">
-        <div class="empty-state-icon">📊</div>
-        <div class="empty-state-text">Aucune donnée ce mois-ci</div>
-      </div>
-    `
-    if (legendEl) legendEl.innerHTML = ''
+  const entries = Object.entries(byCategory).filter(([_, amount]) => amount > 0).sort((a, b) => b[1] - a[1])
+
+  if (total === 0 || entries.length === 0) {
+    if (canvas.parentElement) {
+      canvas.style.display = 'none'
+    }
+    if (legendEl) {
+      legendEl.innerHTML = `
+        <div class="empty-state" style="padding: 24px;">
+          <div class="empty-state-text" style="color: var(--text-muted);">Aucune donnée pour ce mois-ci</div>
+        </div>
+      `
+    }
     return
   }
+
+  canvas.style.display = 'block'
 
   import('chart.js').then(({ Chart, ArcElement, Tooltip, Legend, DoughnutController }) => {
     Chart.register(ArcElement, Tooltip, Legend, DoughnutController)
 
-    const entries = Object.entries(byCategory).sort((a, b) => b[1] - a[1])
     const labels = entries.map(([id]) => {
-      const cat = getCategoryById(id)
-      return `${cat.emoji} ${cat.label}`
+      const cat = getCategoryById(id, type)
+      return cat.label
     })
     const data = entries.map(([, amount]) => amount)
-    const colors = entries.map(([id]) => getCategoryById(id).color)
+    const colors = entries.map(([id]) => getCategoryById(id, type).color)
 
     chartInstance = new Chart(canvas, {
       type: 'doughnut',
@@ -217,7 +254,7 @@ function renderDonutChart(byCategory, total) {
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: (ctx) => ` ${formatCurrency(ctx.raw)} (${((ctx.raw / total) * 100).toFixed(1)}%)`
+              label: (ctx) => ` ${ctx.label}: ${formatCurrency(ctx.raw)} (${((ctx.raw / total) * 100).toFixed(1)}%)`
             }
           }
         }
@@ -228,14 +265,18 @@ function renderDonutChart(byCategory, total) {
     if (legendEl) {
       legendEl.innerHTML = entries
         .map(([id, amount]) => {
-          const cat = getCategoryById(id)
+          const cat = getCategoryById(id, type)
           const pct = ((amount / total) * 100).toFixed(1)
           return `
-          <div class="legend-item">
-            <div class="legend-dot" style="background: ${cat.color}"></div>
-            <div class="legend-label">${cat.emoji} ${cat.label}</div>
-            <div class="legend-value">${formatCurrency(amount)}</div>
-            <div class="legend-pct">${pct}%</div>
+          <div class="legend-item" style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; margin-top: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div class="legend-dot" style="width: 10px; height: 10px; border-radius: 50%; background: ${cat.color}"></div>
+              <div class="legend-label" style="font-weight: 500;">${cat.label}</div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <div class="legend-value" style="font-weight: 700;">${formatCurrency(amount)}</div>
+              <div class="legend-pct" style="color: var(--text-muted); min-width: 45px; text-align: right;">${pct}%</div>
+            </div>
           </div>
         `
         })
