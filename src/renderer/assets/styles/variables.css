@@ -1,0 +1,119 @@
+/* ===========================
+   MonBudget — Design Tokens
+   Dark theme, violet/teal palette
+   =========================== */
+
+/* Font loaded via index.html <link> tag */
+
+:root {
+  /* ── Background Colors ── */
+  --bg-primary: #0f1117;
+  --bg-secondary: #161b27;
+  --bg-tertiary: #1e2535;
+  --bg-elevated: #252d3d;
+  --bg-hover: #2a3347;
+  --bg-input: #1e2535;
+  --bg-overlay: rgba(0, 0, 0, 0.75);
+  --bg-modal: #161b27;
+
+  /* ── Text Colors ── */
+  --text-primary: #f0f2f5;
+  --text-secondary: #8892a4;
+  --text-muted: #546072;
+  --text-link: #6c63ff;
+  --text-inverse: #0f1117;
+
+  /* ── Accent Colors ── */
+  --accent-primary: #6c63ff;
+  --accent-primary-hover: #5a52e0;
+  --accent-primary-dim: rgba(108, 99, 255, 0.15);
+  --accent-secondary: #00d4aa;
+  --accent-secondary-hover: #00b893;
+  --accent-secondary-dim: rgba(0, 212, 170, 0.15);
+  --accent-warning: #f59e0b;
+  --accent-warning-dim: rgba(245, 158, 11, 0.15);
+  --accent-danger: #ef4444;
+  --accent-danger-hover: #dc2626;
+  --accent-danger-dim: rgba(239, 68, 68, 0.15);
+  --accent-success: #22c55e;
+  --accent-success-dim: rgba(34, 197, 94, 0.15);
+  --accent-blue: #3b82f6;
+  --accent-blue-dim: rgba(59, 130, 246, 0.15);
+
+  /* ── Category Colors ── */
+  --cat-food: #f97316;
+  --cat-transport: #3b82f6;
+  --cat-housing: #8b5cf6;
+  --cat-health: #ef4444;
+  --cat-leisure: #ec4899;
+  --cat-clothes: #f59e0b;
+  --cat-bills: #06b6d4;
+  --cat-other: #6b7280;
+
+  /* ── Borders ── */
+  --border-color: #252d3d;
+  --border-hover: #3a4560;
+  --border-focus: #6c63ff;
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 24px rgba(108, 99, 255, 0.2);
+  --shadow-glow-teal: 0 0 24px rgba(0, 212, 170, 0.2);
+
+  /* ── Typography ── */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-size-xs: 0.7rem;
+  --font-size-sm: 0.8rem;
+  --font-size-base: 0.9rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.15rem;
+  --font-size-xl: 1.35rem;
+  --font-size-2xl: 1.75rem;
+  --font-size-3xl: 2.25rem;
+  --font-size-4xl: 3rem;
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* ── Spacing ── */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-base: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* ── Border Radius ── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 18px;
+  --radius-full: 50%;
+
+  /* ── Layout ── */
+  --navbar-height: 60px;
+  --content-max-width: 1100px;
+
+  /* ── Transitions ── */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+  --transition-slow: 400ms ease;
+  --transition-spring: 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ── Z-Index ── */
+  --z-dropdown: 100;
+  --z-navbar: 200;
+  --z-modal-overlay: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+}
