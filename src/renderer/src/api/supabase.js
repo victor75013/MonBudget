@@ -32,6 +32,20 @@ function formatSupabaseError(err) {
 }
 
 // ── Auth Helpers ──
+export async function ensureProfile(userId, username) {
+  try {
+    const { data } = await supabase.from('profiles').select('id').eq('id', userId).maybeSingle()
+    if (!data) {
+      await supabase.from('profiles').upsert(
+        { id: userId, username: username || 'Utilisateur' },
+        { onConflict: 'id' }
+      )
+    }
+  } catch (err) {
+    console.error('ensureProfile error:', err)
+  }
+}
+
 export async function signUp(email, password, username) {
   try {
     const { data, error } = await supabase.auth.signUp({
@@ -43,8 +57,10 @@ export async function signUp(email, password, username) {
       console.error('Supabase signUp error:', error)
       throw new Error(formatSupabaseError(error))
     }
+    if (data?.user) {
+      await ensureProfile(data.user.id, username)
+    }
     if (!data.session && data.user) {
-      // Email confirmation is still enabled in Supabase
       return { ...data, requiresConfirmation: true }
     }
     return data
