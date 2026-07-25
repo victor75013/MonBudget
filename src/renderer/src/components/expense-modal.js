@@ -197,13 +197,18 @@ export function showExpenseModal({ user, expense = null, defaultType = 'expense'
 
     try {
       const keepHistoryInput = document.getElementById('exp-keep-history')
-      const shouldKeepHistory = keepHistoryInput && keepHistoryInput.checked
+      const shouldKeepHistory = keepHistoryInput ? keepHistoryInput.checked : true
 
-      if (isEdit && expense.is_recurring && is_recurring && shouldKeepHistory && amount !== Number(expense.amount)) {
-        // 1. Désactiver la récurrence sur l'ancienne transaction (l'ancien montant reste figé dans l'historique des mois passés)
+      const originalMonthKey = expense?.date ? expense.date.substring(0, 7) : ''
+      const newMonthKey = date ? date.substring(0, 7) : ''
+      const dateMonthChanged = isEdit && originalMonthKey !== newMonthKey
+
+      if (isEdit && expense.is_recurring && (shouldKeepHistory || dateMonthChanged)) {
+        // Si c'est une modification d'un fixe pour un mois futur ou avec conservation de l'historique :
+        // 1. L'ancienne transaction reste figée comme ponctuelle dans son mois d'origine
         await updateExpense(expense.id, { is_recurring: false })
 
-        // 2. Créer la nouvelle transaction récurrente avec le nouveau montant à partir de cette nouvelle date
+        // 2. La nouvelle transaction récurrente démarre à la nouvelle date choisie
         await addExpense({
           user_id: user.id,
           amount,
@@ -211,11 +216,12 @@ export function showExpenseModal({ user, expense = null, defaultType = 'expense'
           category,
           date,
           type: currentType,
-          is_recurring: true,
+          is_recurring,
           note
         })
-        toast.success('Nouveau montant récurrent appliqué à partir de cette date !')
+        toast.success('Modification enregistrée pour ce nouveau mois !')
       } else if (isEdit) {
+        // Simple mise à jour au sein du même mois
         await updateExpense(expense.id, {
           amount,
           description,
@@ -227,6 +233,7 @@ export function showExpenseModal({ user, expense = null, defaultType = 'expense'
         })
         toast.success('Transaction modifiée !')
       } else {
+        // Création initiale
         await addExpense({
           user_id: user.id,
           amount,

@@ -158,27 +158,6 @@ export async function getExpenses(userId, options = {}) {
     query = query.eq('type', options.type)
   }
 
-  if (options.recurringOnly) {
-    query = query.eq('is_recurring', true)
-  }
-
-  if (options.month && options.year) {
-    const start = `${options.year}-${String(options.month).padStart(2, '0')}-01`
-    const endMonth = options.month === 12 ? 1 : options.month + 1
-    const endYear = options.month === 12 ? options.year + 1 : options.year
-    const end = `${endYear}-${String(endMonth).padStart(2, '0')}-01`
-
-    // RÈGLE MÉTIER IMPORTANTE :
-    // - Les transactions ponctuelles (is_recurring=false) doivent appartenir exactement au mois [start, end[.
-    // - Les transactions fixes (is_recurring=true) s'appliquent SEULEMENT à partir du mois de leur date (date < end).
-    //   Elles N'IMPACTENT PAS les mois antérieurs à leur date de création !
-    if (options.includeRecurring !== false) {
-      query = query.or(`and(is_recurring.eq.false,date.gte.${start},date.lt.${end}),and(is_recurring.eq.true,date.lt.${end})`)
-    } else {
-      query = query.gte('date', start).lt('date', end)
-    }
-  }
-
   if (options.category) {
     query = query.eq('category', options.category)
   }
@@ -187,17 +166,35 @@ export async function getExpenses(userId, options = {}) {
     query = query.ilike('description', `%${options.search}%`)
   }
 
-  if (options.limit) query = query.limit(options.limit)
-
   const { data, error } = await query
   if (error) throw error
 
-  // S'assurer que le champ type et is_recurring existent par défaut
-  return (data || []).map((e) => ({
+  let items = (data || []).map((e) => ({
     ...e,
     type: e.type || 'expense',
     is_recurring: !!e.is_recurring
   }))
+
+  if (options.month && options.year) {
+    const targetMonthKey = `${options.year}-${String(options.month).padStart(2, '0')}`
+
+    items = items.filter((item) => {
+      const itemMonthKey = item.date ? item.date.substring(0, 7) : ''
+      if (!item.is_recurring) {
+        // Opération ponctuelle: s'applique SEULEMENT pour son mois exact (YYYY-MM)
+        return itemMonthKey === targetMonthKey
+      } else {
+        // Opération fixe/récurrente: s'applique à partir du mois de sa date (itemMonthKey <= targetMonthKey)
+        return itemMonthKey <= targetMonthKey
+      }
+    })
+  }
+
+  if (options.limit) {
+    items = items.slice(0, options.limit)
+  }
+
+  return items
 }
 
 export async function getAllExpenses(userId) {
