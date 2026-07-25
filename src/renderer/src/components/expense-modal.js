@@ -204,22 +204,26 @@ export function showExpenseModal({ user, expense = null, defaultType = 'expense'
       const dateMonthChanged = isEdit && originalMonthKey !== newMonthKey
 
       if (isEdit && expense.is_recurring && (shouldKeepHistory || dateMonthChanged)) {
-        // Si c'est une modification d'un fixe pour un mois futur ou avec conservation de l'historique :
-        // 1. L'ancienne transaction reste figée comme ponctuelle dans son mois d'origine
-        await updateExpense(expense.id, { is_recurring: false })
+        // 1. L'ancienne transaction reste inchangée dans son mois d'origine avec son ancienne date et son ancien montant,
+        //    mais n'est plus récurrente afin de ne plus impacter les mois futurs.
+        await updateExpense(expense.id, {
+          amount: Number(expense.amount),
+          date: expense.date,
+          is_recurring: false
+        })
 
-        // 2. La nouvelle transaction récurrente démarre à la nouvelle date choisie
+        // 2. La nouvelle transaction récurrente prend le relais à la NOUVELLE date choisie avec le NOUVEAU montant
         await addExpense({
           user_id: user.id,
           amount,
           description,
           category,
-          date,
+          date, // Nouvelle date choisie (ex: 2026-08-01)
           type: currentType,
           is_recurring,
           note
         })
-        toast.success('Modification enregistrée pour ce nouveau mois !')
+        toast.success('Nouveau montant appliqué à partir de cette date !')
       } else if (isEdit) {
         // Simple mise à jour au sein du même mois
         await updateExpense(expense.id, {
