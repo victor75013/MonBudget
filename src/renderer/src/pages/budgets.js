@@ -126,8 +126,8 @@ async function loadBudgets(user) {
           return `
           <div class="budget-card">
             <div class="budget-card-header">
-              <div class="budget-cat-icon" style="background: ${cat.bg}; color: ${cat.color}; font-weight: 700; font-size: 0.85rem;">
-                ${cat.label.substring(0, 2).toUpperCase()}
+              <div class="budget-cat-icon" style="background: ${cat.bg}; color: ${cat.color}; font-size: 1.25rem;">
+                ${cat.emoji || '🏷️'}
               </div>
               <div class="budget-card-info">
                 <div class="budget-card-name" style="display: flex; align-items: center; gap: 6px;">

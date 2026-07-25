@@ -55,23 +55,23 @@ export function todayISO() {
 
 // ── Category helpers ──
 export const EXPENSE_CATEGORIES = [
-  { id: 'food', label: 'Alimentation', color: '#f97316', bg: 'rgba(249,115,22,0.15)' },
-  { id: 'transport', label: 'Transport', color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' },
-  { id: 'housing', label: 'Logement', color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' },
-  { id: 'health', label: 'Santé', color: '#ef4444', bg: 'rgba(239,68,68,0.15)' },
-  { id: 'leisure', label: 'Loisirs', color: '#ec4899', bg: 'rgba(236,72,153,0.15)' },
-  { id: 'clothes', label: 'Vêtements', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
-  { id: 'bills', label: 'Factures', color: '#06b6d4', bg: 'rgba(6,182,212,0.15)' },
-  { id: 'other', label: 'Autres', color: '#6b7280', bg: 'rgba(107,114,128,0.15)' }
+  { id: 'food', label: 'Alimentation', emoji: '🛒', color: '#ff7675', bg: 'rgba(255, 118, 117, 0.15)' },
+  { id: 'transport', label: 'Transport', emoji: '⛽', color: '#74b9ff', bg: 'rgba(116, 185, 255, 0.15)' },
+  { id: 'housing', label: 'Logement', emoji: '🏠', color: '#a29bfe', bg: 'rgba(162, 155, 254, 0.15)' },
+  { id: 'health', label: 'Santé', emoji: '🩺', color: '#ff7675', bg: 'rgba(255, 118, 117, 0.15)' },
+  { id: 'leisure', label: 'Loisirs', emoji: '🎬', color: '#fd79a8', bg: 'rgba(253, 121, 168, 0.15)' },
+  { id: 'clothing', label: 'Vêtements', emoji: '👕', color: '#e17055', bg: 'rgba(225, 112, 85, 0.15)' },
+  { id: 'bills', label: 'Factures', emoji: '📄', color: '#00cec9', bg: 'rgba(0, 206, 201, 0.15)' },
+  { id: 'other_expense', label: 'Autres', emoji: '🏷️', color: '#b2bec3', bg: 'rgba(178, 190, 195, 0.15)' }
 ]
 
 export const INCOME_CATEGORIES = [
-  { id: 'salary', label: 'Salaire', color: '#10b981', bg: 'rgba(16,185,129,0.15)' },
-  { id: 'freelance', label: 'Freelance', color: '#06b6d4', bg: 'rgba(6,182,212,0.15)' },
-  { id: 'investments', label: 'Investissements', color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' },
-  { id: 'gifts', label: 'Cadeaux / Ventes', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
-  { id: 'allowance', label: 'Aides / Allocations', color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' },
-  { id: 'other_income', label: 'Autre revenu', color: '#10b981', bg: 'rgba(16,185,129,0.15)' }
+  { id: 'salary', label: 'Salaire', emoji: '💼', color: '#00b894', bg: 'rgba(0, 184, 148, 0.15)' },
+  { id: 'freelance', label: 'Freelance', emoji: '💻', color: '#0984e3', bg: 'rgba(9, 132, 227, 0.15)' },
+  { id: 'investments', label: 'Investissements', emoji: '📈', color: '#6c5ce7', bg: 'rgba(108, 92, 231, 0.15)' },
+  { id: 'gifts', label: 'Cadeaux / Ventes', emoji: '🎁', color: '#fdcb6e', bg: 'rgba(253, 203, 110, 0.15)' },
+  { id: 'allowance', label: 'Aides / Allocations', emoji: '🏛️', color: '#e84393', bg: 'rgba(232, 67, 147, 0.15)' },
+  { id: 'other_income', label: 'Autre revenu', emoji: '🏷️', color: '#55efc4', bg: 'rgba(85, 239, 196, 0.15)' }
 ]
 
 export const CATEGORIES = [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES]
