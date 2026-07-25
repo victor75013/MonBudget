@@ -22,7 +22,7 @@ export async function renderHome(container, user) {
     <div class="page-container fade-in">
       <div class="dashboard-header">
         <div class="dashboard-greeting">
-          Bonjour, <span>${user?.user_metadata?.username || user?.email?.split('@')[0] || 'vous'}</span> 👋
+          Bonjour, <span>${user?.user_metadata?.username || user?.email?.split('@')[0] || 'vous'}</span>
         </div>
         <div class="dashboard-date">${formatMonthYear(month, year)}</div>
       </div>
@@ -80,13 +80,11 @@ function renderStats(stats, month, year) {
   document.getElementById('stats-grid-container').innerHTML = `
     <div class="stats-grid">
       <div class="stat-card" style="--card-accent: var(--accent-primary)">
-        <div class="stat-card-icon">💸</div>
         <div class="stat-card-label">Dépensé ce mois</div>
         <div class="stat-card-value">${formatCurrency(stats.total)}</div>
         <div class="stat-card-sub">${stats.count} transaction${stats.count > 1 ? 's' : ''}</div>
       </div>
       <div class="stat-card" style="--card-accent: var(--accent-secondary)">
-        <div class="stat-card-icon">🎯</div>
         <div class="stat-card-label">Budget restant</div>
         <div class="stat-card-value" style="color: ${remainingColor}">
           ${remaining !== null ? formatCurrency(remaining) : '—'}
@@ -94,13 +92,11 @@ function renderStats(stats, month, year) {
         <div class="stat-card-sub">${stats.totalBudget > 0 ? `Budget: ${formatCurrency(stats.totalBudget)}` : 'Aucun budget défini'}</div>
       </div>
       <div class="stat-card" style="--card-accent: var(--accent-warning)">
-        <div class="stat-card-icon">📈</div>
         <div class="stat-card-label">Dépense max</div>
         <div class="stat-card-value">${stats.maxExpense > 0 ? formatCurrency(stats.maxExpense) : '—'}</div>
         <div class="stat-card-sub">Ce mois-ci</div>
       </div>
       <div class="stat-card" style="--card-accent: var(--accent-blue)">
-        <div class="stat-card-icon">🗓️</div>
         <div class="stat-card-label">Catégories</div>
         <div class="stat-card-value">${Object.keys(stats.byCategory).length}</div>
         <div class="stat-card-sub">Utilisées ce mois</div>
