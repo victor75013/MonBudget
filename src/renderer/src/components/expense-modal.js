@@ -1,27 +1,33 @@
 // ===========================
-// MonBudget — Expense Modal
-// Add / Edit an expense
+// MonBudget — Transaction Modal
+// Add / Edit a transaction (Expense or Income)
 // ===========================
 
-import { CATEGORIES, todayISO, escapeHTML } from '../utils/helpers.js'
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, todayISO, escapeHTML } from '../utils/helpers.js'
 import { addExpense, updateExpense } from '../api/supabase.js'
 import { toast } from './toast.js'
 
-export function showExpenseModal({ user, expense = null, onSaved }) {
+export function showExpenseModal({ user, expense = null, defaultType = 'expense', onSaved }) {
   const isEdit = !!expense
+  let currentType = expense?.type || defaultType
   const existing = document.getElementById('expense-modal-overlay')
   if (existing) existing.remove()
 
-  const categoryPickerHTML = CATEGORIES.map(
-    (cat) => `
-    <div class="category-option ${expense?.category === cat.id ? 'selected' : ''}"
-         data-cat="${cat.id}"
-         style="--cat-color: ${cat.color}; --cat-bg: ${cat.bg}">
-      <span class="cat-emoji">${cat.emoji}</span>
-      <span>${cat.label}</span>
-    </div>
-  `
-  ).join('')
+  function getCategoryOptionsHTML(type) {
+    const list = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
+    const selectedCat = expense?.category || list[0].id
+    return list
+      .map(
+        (cat) => `
+      <div class="category-option ${selectedCat === cat.id ? 'selected' : ''}"
+           data-cat="${cat.id}"
+           style="--cat-color: ${cat.color}; --cat-bg: ${cat.bg}">
+        <span>${cat.label}</span>
+      </div>
+    `
+      )
+      .join('')
+  }
 
   const overlay = document.createElement('div')
   overlay.className = 'modal-overlay'
@@ -29,11 +35,26 @@ export function showExpenseModal({ user, expense = null, onSaved }) {
   overlay.innerHTML = `
     <div class="modal">
       <div class="modal-header">
-        <div class="modal-title">${isEdit ? 'Modifier la dépense' : 'Nouvelle dépense'}</div>
+        <div class="modal-title">${isEdit ? 'Modifier la transaction' : 'Nouvelle transaction'}</div>
         <button class="modal-close" id="expense-modal-close">✕</button>
       </div>
 
       <div id="expense-form-error" class="auth-error"></div>
+
+      <!-- Type Toggle -->
+      <div class="form-group">
+        <label class="form-label">Type d'opération</label>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn ${currentType === 'expense' ? 'btn-danger' : 'btn-secondary'}"
+                  id="type-expense-btn" style="flex: 1;">
+            Dépense
+          </button>
+          <button type="button" class="btn ${currentType === 'income' ? 'btn-teal' : 'btn-secondary'}"
+                  id="type-income-btn" style="flex: 1;">
+            Revenu
+          </button>
+        </div>
+      </div>
 
       <div class="form-group">
         <label class="form-label">Montant (€)</label>
@@ -43,22 +64,33 @@ export function showExpenseModal({ user, expense = null, onSaved }) {
 
       <div class="form-group">
         <label class="form-label">Description</label>
-        <input class="form-input" type="text" id="exp-desc" placeholder="Ex: Courses Carrefour"
+        <input class="form-input" type="text" id="exp-desc" placeholder="Ex: Salaire, Loyer, Courses"
           value="${expense ? escapeHTML(expense.description) : ''}" required />
       </div>
 
       <div class="form-group">
         <label class="form-label">Catégorie</label>
         <div class="category-picker" id="category-picker">
-          ${categoryPickerHTML}
+          ${getCategoryOptionsHTML(currentType)}
         </div>
-        <input type="hidden" id="exp-category" value="${expense?.category || ''}" />
+        <input type="hidden" id="exp-category" value="${expense?.category || (currentType === 'income' ? INCOME_CATEGORIES[0].id : EXPENSE_CATEGORIES[0].id)}" />
       </div>
 
       <div class="form-group">
         <label class="form-label">Date</label>
         <input class="form-input" type="date" id="exp-date"
           value="${expense?.date || todayISO()}" required />
+      </div>
+
+      <!-- Option Opération fixe / récurrente -->
+      <div class="form-group" style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; margin-top: 16px;">
+        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.85rem; font-weight: 500;">
+          <input type="checkbox" id="exp-recurring" ${expense?.is_recurring ? 'checked' : ''} style="width: 18px; height: 18px; cursor: pointer;" />
+          <span>Opération fixe / récurrente (tous les mois)</span>
+        </label>
+        <div class="form-hint" style="margin-top: 4px; margin-left: 28px;">
+          Ex: Loyer, abonnement, salaire fixe... Sera prise en compte chaque mois.
+        </div>
       </div>
 
       <div class="form-group">
@@ -69,7 +101,7 @@ export function showExpenseModal({ user, expense = null, onSaved }) {
       <div class="modal-footer">
         <button class="btn btn-secondary" id="expense-modal-cancel">Annuler</button>
         <button class="btn btn-primary" id="expense-modal-save">
-          ${isEdit ? 'Enregistrer' : 'Ajouter la dépense'}
+          ${isEdit ? 'Enregistrer' : 'Ajouter'}
         </button>
       </div>
     </div>
@@ -78,14 +110,40 @@ export function showExpenseModal({ user, expense = null, onSaved }) {
   document.body.appendChild(overlay)
   requestAnimationFrame(() => overlay.classList.add('show'))
 
-  // Category picker
-  overlay.querySelectorAll('.category-option').forEach((opt) => {
-    opt.addEventListener('click', () => {
-      overlay.querySelectorAll('.category-option').forEach((o) => o.classList.remove('selected'))
-      opt.classList.add('selected')
-      document.getElementById('exp-category').value = opt.dataset.cat
+  // Type Toggle Buttons
+  const expenseBtn = document.getElementById('type-expense-btn')
+  const incomeBtn = document.getElementById('type-income-btn')
+  const pickerEl = document.getElementById('category-picker')
+  const categoryInput = document.getElementById('exp-category')
+
+  function updateTypeUI(newType) {
+    currentType = newType
+    if (currentType === 'expense') {
+      expenseBtn.className = 'btn btn-danger'
+      incomeBtn.className = 'btn btn-secondary'
+    } else {
+      expenseBtn.className = 'btn btn-secondary'
+      incomeBtn.className = 'btn btn-teal'
+    }
+    pickerEl.innerHTML = getCategoryOptionsHTML(currentType)
+    categoryInput.value = (currentType === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES)[0].id
+    attachCategoryPickerEvents()
+  }
+
+  expenseBtn.addEventListener('click', () => updateTypeUI('expense'))
+  incomeBtn.addEventListener('click', () => updateTypeUI('income'))
+
+  function attachCategoryPickerEvents() {
+    overlay.querySelectorAll('.category-option').forEach((opt) => {
+      opt.addEventListener('click', () => {
+        overlay.querySelectorAll('.category-option').forEach((o) => o.classList.remove('selected'))
+        opt.classList.add('selected')
+        categoryInput.value = opt.dataset.cat
+      })
     })
-  })
+  }
+
+  attachCategoryPickerEvents()
 
   function close() {
     overlay.classList.remove('show')
@@ -101,8 +159,9 @@ export function showExpenseModal({ user, expense = null, onSaved }) {
   document.getElementById('expense-modal-save').addEventListener('click', async () => {
     const amount = parseFloat(document.getElementById('exp-amount').value)
     const description = document.getElementById('exp-desc').value.trim()
-    const category = document.getElementById('exp-category').value
+    const category = categoryInput.value
     const date = document.getElementById('exp-date').value
+    const is_recurring = document.getElementById('exp-recurring').checked
     const note = document.getElementById('exp-note').value.trim()
     const errorEl = document.getElementById('expense-form-error')
     const saveBtn = document.getElementById('expense-modal-save')
@@ -124,22 +183,34 @@ export function showExpenseModal({ user, expense = null, onSaved }) {
       errorEl.classList.add('show')
       return
     }
-    if (!date) {
-      errorEl.textContent = 'Veuillez choisir une date.'
-      errorEl.classList.add('show')
-      return
-    }
 
     saveBtn.disabled = true
     saveBtn.textContent = 'Enregistrement...'
 
     try {
       if (isEdit) {
-        await updateExpense(expense.id, { amount, description, category, date, note })
-        toast.success('Dépense modifiée !')
+        await updateExpense(expense.id, {
+          amount,
+          description,
+          category,
+          date,
+          type: currentType,
+          is_recurring,
+          note
+        })
+        toast.success('Transaction modifiée !')
       } else {
-        await addExpense({ user_id: user.id, amount, description, category, date, note })
-        toast.success('Dépense ajoutée !')
+        await addExpense({
+          user_id: user.id,
+          amount,
+          description,
+          category,
+          date,
+          type: currentType,
+          is_recurring,
+          note
+        })
+        toast.success(currentType === 'income' ? 'Revenu ajouté !' : 'Dépense ajoutée !')
       }
       close()
       if (onSaved) onSaved()
@@ -147,10 +218,9 @@ export function showExpenseModal({ user, expense = null, onSaved }) {
       errorEl.textContent = err.message || 'Une erreur est survenue.'
       errorEl.classList.add('show')
       saveBtn.disabled = false
-      saveBtn.textContent = isEdit ? 'Enregistrer' : 'Ajouter la dépense'
+      saveBtn.textContent = isEdit ? 'Enregistrer' : 'Ajouter'
     }
   })
 
-  // Focus first input
   setTimeout(() => document.getElementById('exp-amount')?.focus(), 100)
 }

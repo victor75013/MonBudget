@@ -82,9 +82,8 @@ function renderBarChart(yearlyData, year) {
     Chart.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, BarController)
 
     const labels = yearlyData.map((d) => getMonthName(d.month, year).substring(0, 3))
-    const data = yearlyData.map((d) => d.total)
-    const now = new Date()
-    const currentMonth = now.getMonth() + 1
+    const expenseData = yearlyData.map((d) => d.expense)
+    const incomeData = yearlyData.map((d) => d.income)
 
     barChartInstance = new Chart(canvas, {
       type: 'bar',
@@ -92,15 +91,20 @@ function renderBarChart(yearlyData, year) {
         labels,
         datasets: [
           {
-            label: 'Dépenses',
-            data,
-            backgroundColor: yearlyData.map((d) =>
-              d.month === currentMonth ? 'rgba(108, 99, 255, 0.9)' : 'rgba(108, 99, 255, 0.3)'
-            ),
-            borderColor: 'rgba(108, 99, 255, 0.8)',
+            label: 'Revenus',
+            data: incomeData,
+            backgroundColor: 'rgba(0, 212, 170, 0.8)',
+            borderColor: 'rgba(0, 212, 170, 1)',
             borderWidth: 1,
-            borderRadius: 6,
-            hoverBackgroundColor: 'rgba(108, 99, 255, 0.8)'
+            borderRadius: 6
+          },
+          {
+            label: 'Dépenses',
+            data: expenseData,
+            backgroundColor: 'rgba(239, 68, 68, 0.8)',
+            borderColor: 'rgba(239, 68, 68, 1)',
+            borderWidth: 1,
+            borderRadius: 6
           }
         ]
       },
@@ -108,10 +112,14 @@ function renderBarChart(yearlyData, year) {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { display: false },
+          legend: {
+            display: true,
+            position: 'top',
+            labels: { color: '#8892a4', font: { size: 12 } }
+          },
           tooltip: {
             callbacks: {
-              label: (ctx) => ` ${formatCurrency(ctx.raw)}`
+              label: (ctx) => ` ${ctx.dataset.label}: ${formatCurrency(ctx.raw)}`
             }
           }
         },
@@ -219,32 +227,29 @@ function renderYearlySummary(yearlyData) {
   const el = document.getElementById('yearly-summary-content')
   if (!el) return
 
-  const yearTotal = yearlyData.reduce((s, d) => s + d.total, 0)
+  const yearExpense = yearlyData.reduce((s, d) => s + d.expense, 0)
+  const yearIncome = yearlyData.reduce((s, d) => s + d.income, 0)
+  const yearNet = yearIncome - yearExpense
   const yearCount = yearlyData.reduce((s, d) => s + d.count, 0)
-  const activeMonths = yearlyData.filter((d) => d.total > 0).length
-  const maxMonth = yearlyData.reduce((best, d) => (d.total > best.total ? d : best), yearlyData[0])
-  const avg = activeMonths > 0 ? yearTotal / activeMonths : 0
 
   el.innerHTML = `
     <div style="display: flex; flex-direction: column; gap: 12px; padding-top: 4px;">
       <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-tertiary); border-radius: 10px;">
-        <div style="font-size: 0.85rem; color: var(--text-secondary);">Total ${new Date().getFullYear()}</div>
-        <div style="font-weight: 700; color: var(--text-primary);">${formatCurrency(yearTotal)}</div>
+        <div style="font-size: 0.85rem; color: var(--text-secondary);">Revenus ${new Date().getFullYear()}</div>
+        <div style="font-weight: 700; color: var(--accent-secondary);">+${formatCurrency(yearIncome)}</div>
       </div>
       <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-tertiary); border-radius: 10px;">
-        <div style="font-size: 0.85rem; color: var(--text-secondary);">Transactions</div>
+        <div style="font-size: 0.85rem; color: var(--text-secondary);">Dépenses ${new Date().getFullYear()}</div>
+        <div style="font-weight: 700; color: var(--accent-danger);">-${formatCurrency(yearExpense)}</div>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-tertiary); border-radius: 10px;">
+        <div style="font-size: 0.85rem; color: var(--text-secondary);">Solde Net ${new Date().getFullYear()}</div>
+        <div style="font-weight: 700; color: ${yearNet >= 0 ? 'var(--accent-secondary)' : 'var(--accent-danger)'};">${yearNet >= 0 ? '+' : ''}${formatCurrency(yearNet)}</div>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-tertiary); border-radius: 10px;">
+        <div style="font-size: 0.85rem; color: var(--text-secondary);">Total Transactions</div>
         <div style="font-weight: 700; color: var(--text-primary);">${yearCount}</div>
       </div>
-      <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-tertiary); border-radius: 10px;">
-        <div style="font-size: 0.85rem; color: var(--text-secondary);">Moyenne mensuelle</div>
-        <div style="font-weight: 700; color: var(--text-primary);">${formatCurrency(avg)}</div>
-      </div>
-      ${maxMonth && maxMonth.total > 0 ? `
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-tertiary); border-radius: 10px;">
-          <div style="font-size: 0.85rem; color: var(--text-secondary);">Mois le plus élevé</div>
-          <div style="font-weight: 700; color: var(--accent-danger);">${getMonthName(maxMonth.month, maxMonth.year)} (${formatCurrency(maxMonth.total)})</div>
-        </div>
-      ` : ''}
     </div>
   `
 }

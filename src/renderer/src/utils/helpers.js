@@ -54,31 +54,45 @@ export function todayISO() {
 }
 
 // ── Category helpers ──
-export const CATEGORIES = [
-  { id: 'food', label: 'Alimentation', emoji: '🍔', color: '#f97316', bg: 'rgba(249,115,22,0.15)' },
-  { id: 'transport', label: 'Transport', emoji: '🚗', color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' },
-  { id: 'housing', label: 'Logement', emoji: '🏠', color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' },
-  { id: 'health', label: 'Santé', emoji: '💊', color: '#ef4444', bg: 'rgba(239,68,68,0.15)' },
-  { id: 'leisure', label: 'Loisirs', emoji: '🎮', color: '#ec4899', bg: 'rgba(236,72,153,0.15)' },
-  { id: 'clothes', label: 'Vêtements', emoji: '👗', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
-  { id: 'bills', label: 'Factures', emoji: '💡', color: '#06b6d4', bg: 'rgba(6,182,212,0.15)' },
-  { id: 'other', label: 'Autres', emoji: '📦', color: '#6b7280', bg: 'rgba(107,114,128,0.15)' }
+export const EXPENSE_CATEGORIES = [
+  { id: 'food', label: 'Alimentation', color: '#f97316', bg: 'rgba(249,115,22,0.15)' },
+  { id: 'transport', label: 'Transport', color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' },
+  { id: 'housing', label: 'Logement', color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' },
+  { id: 'health', label: 'Santé', color: '#ef4444', bg: 'rgba(239,68,68,0.15)' },
+  { id: 'leisure', label: 'Loisirs', color: '#ec4899', bg: 'rgba(236,72,153,0.15)' },
+  { id: 'clothes', label: 'Vêtements', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
+  { id: 'bills', label: 'Factures', color: '#06b6d4', bg: 'rgba(6,182,212,0.15)' },
+  { id: 'other', label: 'Autres', color: '#6b7280', bg: 'rgba(107,114,128,0.15)' }
 ]
 
-export function getCategoryById(id) {
-  return CATEGORIES.find((c) => c.id === id) || CATEGORIES[CATEGORIES.length - 1]
+export const INCOME_CATEGORIES = [
+  { id: 'salary', label: 'Salaire', color: '#10b981', bg: 'rgba(16,185,129,0.15)' },
+  { id: 'freelance', label: 'Freelance', color: '#06b6d4', bg: 'rgba(6,182,212,0.15)' },
+  { id: 'investments', label: 'Investissements', color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' },
+  { id: 'gifts', label: 'Cadeaux / Ventes', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
+  { id: 'allowance', label: 'Aides / Allocations', color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' },
+  { id: 'other_income', label: 'Autre revenu', color: '#10b981', bg: 'rgba(16,185,129,0.15)' }
+]
+
+export const CATEGORIES = [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES]
+
+export function getCategoriesByType(type = 'expense') {
+  return type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
 }
 
-export function getCategoryIcon(id) {
-  return getCategoryById(id).emoji
+export function getCategoryById(id, type = 'expense') {
+  const found = CATEGORIES.find((c) => c.id === id)
+  if (found) return found
+  const list = getCategoriesByType(type)
+  return list[list.length - 1]
 }
 
-export function getCategoryLabel(id) {
-  return getCategoryById(id).label
+export function getCategoryLabel(id, type = 'expense') {
+  return getCategoryById(id, type).label
 }
 
-export function getCategoryColor(id) {
-  return getCategoryById(id).color
+export function getCategoryColor(id, type = 'expense') {
+  return getCategoryById(id, type).color
 }
 
 // ── Utils ──

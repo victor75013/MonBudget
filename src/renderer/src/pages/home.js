@@ -20,11 +20,17 @@ export async function renderHome(container, user) {
 
   container.innerHTML = `
     <div class="page-container fade-in">
-      <div class="dashboard-header">
-        <div class="dashboard-greeting">
-          Bonjour, <span>${user?.user_metadata?.username || user?.email?.split('@')[0] || 'vous'}</span>
+      <div class="dashboard-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+        <div>
+          <div class="dashboard-greeting">
+            Bonjour, <span>${user?.user_metadata?.username || user?.email?.split('@')[0] || 'vous'}</span>
+          </div>
+          <div class="dashboard-date">${formatMonthYear(month, year)}</div>
         </div>
-        <div class="dashboard-date">${formatMonthYear(month, year)}</div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-teal btn-sm" id="quick-add-income">+ Revenu</button>
+          <button class="btn btn-primary btn-sm" id="quick-add-expense">+ Dépense</button>
+        </div>
       </div>
 
       <div id="stats-grid-container">
@@ -44,8 +50,7 @@ export async function renderHome(container, user) {
 
         <div class="chart-container">
           <div class="chart-title" style="display: flex; align-items: center; justify-content: space-between;">
-            <span>Dernières dépenses</span>
-            <button class="btn btn-primary btn-sm" id="quick-add-btn">+ Ajouter</button>
+            <span>Dernières transactions</span>
           </div>
           <div id="recent-expenses" style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
             ${[1, 2, 3, 4, 5].map(() => `<div class="skeleton" style="height: 60px; border-radius: 10px;"></div>`).join('')}
@@ -55,51 +60,59 @@ export async function renderHome(container, user) {
     </div>
   `
 
-  // Quick add button
-  document.getElementById('quick-add-btn').addEventListener('click', () => {
+  document.getElementById('quick-add-expense').addEventListener('click', () => {
     showExpenseModal({
       user,
+      defaultType: 'expense',
+      onSaved: () => renderHome(container, user)
+    })
+  })
+
+  document.getElementById('quick-add-income').addEventListener('click', () => {
+    showExpenseModal({
+      user,
+      defaultType: 'income',
       onSaved: () => renderHome(container, user)
     })
   })
 
   try {
     const stats = await getMonthStats(user.id, month, year)
-    renderStats(stats, month, year)
-    renderRecentExpenses(stats.expenses.slice(0, 6), user, container)
-    renderDonutChart(stats.byCategory, stats.total)
+    renderStats(stats)
+    renderRecentExpenses(stats.allItems.slice(0, 6), user, container)
+    renderDonutChart(stats.expenseByCategory, stats.totalExpense)
   } catch (err) {
     console.error('Dashboard error:', err)
   }
 }
 
-function renderStats(stats, month, year) {
-  const remaining = stats.remaining
-  const remainingColor = remaining === null ? 'var(--accent-primary)' : remaining >= 0 ? 'var(--accent-secondary)' : 'var(--accent-danger)'
+function renderStats(stats) {
+  const balanceColor = stats.netBalance >= 0 ? 'var(--accent-secondary)' : 'var(--accent-danger)'
+  const balanceSign = stats.netBalance > 0 ? '+' : ''
 
   document.getElementById('stats-grid-container').innerHTML = `
     <div class="stats-grid">
-      <div class="stat-card" style="--card-accent: var(--accent-primary)">
-        <div class="stat-card-label">Dépensé ce mois</div>
-        <div class="stat-card-value">${formatCurrency(stats.total)}</div>
-        <div class="stat-card-sub">${stats.count} transaction${stats.count > 1 ? 's' : ''}</div>
-      </div>
       <div class="stat-card" style="--card-accent: var(--accent-secondary)">
-        <div class="stat-card-label">Budget restant</div>
-        <div class="stat-card-value" style="color: ${remainingColor}">
-          ${remaining !== null ? formatCurrency(remaining) : '—'}
+        <div class="stat-card-label">Revenus ce mois</div>
+        <div class="stat-card-value" style="color: var(--accent-secondary)">+${formatCurrency(stats.totalIncome)}</div>
+        <div class="stat-card-sub">dont ${formatCurrency(stats.fixedIncome)} fixes</div>
+      </div>
+      <div class="stat-card" style="--card-accent: var(--accent-danger)">
+        <div class="stat-card-label">Dépenses ce mois</div>
+        <div class="stat-card-value" style="color: var(--accent-danger)">-${formatCurrency(stats.totalExpense)}</div>
+        <div class="stat-card-sub">dont ${formatCurrency(stats.fixedExpenses)} fixes</div>
+      </div>
+      <div class="stat-card" style="--card-accent: ${balanceColor}">
+        <div class="stat-card-label">Solde net</div>
+        <div class="stat-card-value" style="color: ${balanceColor}">
+          ${balanceSign}${formatCurrency(stats.netBalance)}
         </div>
-        <div class="stat-card-sub">${stats.totalBudget > 0 ? `Budget: ${formatCurrency(stats.totalBudget)}` : 'Aucun budget défini'}</div>
+        <div class="stat-card-sub">${stats.netBalance >= 0 ? 'Capacité d\'épargne' : 'Déficit ce mois'}</div>
       </div>
-      <div class="stat-card" style="--card-accent: var(--accent-warning)">
-        <div class="stat-card-label">Dépense max</div>
-        <div class="stat-card-value">${stats.maxExpense > 0 ? formatCurrency(stats.maxExpense) : '—'}</div>
-        <div class="stat-card-sub">Ce mois-ci</div>
-      </div>
-      <div class="stat-card" style="--card-accent: var(--accent-blue)">
-        <div class="stat-card-label">Catégories</div>
-        <div class="stat-card-value">${Object.keys(stats.byCategory).length}</div>
-        <div class="stat-card-sub">Utilisées ce mois</div>
+      <div class="stat-card" style="--card-accent: var(--accent-primary)">
+        <div class="stat-card-label">Charges fixes</div>
+        <div class="stat-card-value">${formatCurrency(stats.fixedExpenses)}</div>
+        <div class="stat-card-sub">Prélèvements récurrents</div>
       </div>
     </div>
   `
@@ -112,9 +125,8 @@ function renderRecentExpenses(expenses, user, container) {
   if (expenses.length === 0) {
     el.innerHTML = `
       <div class="empty-state" style="padding: 24px;">
-        <div class="empty-state-icon">💳</div>
-        <div class="empty-state-title">Aucune dépense</div>
-        <div class="empty-state-text">Ajoutez votre première dépense !</div>
+        <div class="empty-state-title">Aucune transaction</div>
+        <div class="empty-state-text">Ajoutez votre première dépense ou revenu !</div>
       </div>
     `
     return
@@ -122,21 +134,29 @@ function renderRecentExpenses(expenses, user, container) {
 
   el.innerHTML = expenses
     .map((e) => {
-      const cat = getCategoryById(e.category)
+      const isIncome = e.type === 'income'
+      const cat = getCategoryById(e.category, e.type)
+      const amountClass = isIncome ? 'positive' : 'negative'
+      const amountSign = isIncome ? '+' : '-'
+      const amountColor = isIncome ? 'var(--accent-secondary)' : 'var(--accent-danger)'
+
       return `
       <div class="expense-item" style="cursor: default;">
         <div class="expense-icon" style="background: ${cat.bg}; color: ${cat.color}">
-          ${cat.emoji}
+          ${isIncome ? '⬆️' : '⬇️'}
         </div>
         <div class="expense-info">
-          <div class="expense-desc">${e.description}</div>
+          <div class="expense-desc" style="display: flex; align-items: center; gap: 6px;">
+            <span>${e.description}</span>
+            ${e.is_recurring ? `<span style="font-size: 0.7rem; background: var(--bg-tertiary); border: 1px solid var(--border-color); padding: 1px 6px; border-radius: 4px; color: var(--accent-primary);">Fixe</span>` : ''}
+          </div>
           <div class="expense-meta">
             <span>${cat.label}</span>
             <span>•</span>
             <span>${formatShortDate(e.date)}</span>
           </div>
         </div>
-        <div class="expense-amount negative">-${formatCurrency(e.amount)}</div>
+        <div class="expense-amount" style="color: ${amountColor}">${amountSign}${formatCurrency(e.amount)}</div>
       </div>
     `
     })

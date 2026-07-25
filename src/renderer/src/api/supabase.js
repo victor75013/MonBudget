@@ -154,12 +154,26 @@ export async function getExpenses(userId, options = {}) {
     .order('date', { ascending: false })
     .order('created_at', { ascending: false })
 
+  if (options.type && options.type !== 'all') {
+    query = query.eq('type', options.type)
+  }
+
+  if (options.recurringOnly) {
+    query = query.eq('is_recurring', true)
+  }
+
   if (options.month && options.year) {
     const start = `${options.year}-${String(options.month).padStart(2, '0')}-01`
     const endMonth = options.month === 12 ? 1 : options.month + 1
     const endYear = options.month === 12 ? options.year + 1 : options.year
     const end = `${endYear}-${String(endMonth).padStart(2, '0')}-01`
-    query = query.gte('date', start).lt('date', end)
+
+    // Si on cherche par mois, on inclut aussi les opérations récurrentes fixes (is_recurring = true)
+    if (options.includeRecurring !== false) {
+      query = query.or(`and(date.gte.${start},date.lt.${end}),is_recurring.eq.true`)
+    } else {
+      query = query.gte('date', start).lt('date', end)
+    }
   }
 
   if (options.category) {
@@ -174,7 +188,13 @@ export async function getExpenses(userId, options = {}) {
 
   const { data, error } = await query
   if (error) throw error
-  return data
+
+  // S'assurer que le champ type et is_recurring existent par défaut
+  return (data || []).map((e) => ({
+    ...e,
+    type: e.type || 'expense',
+    is_recurring: !!e.is_recurring
+  }))
 }
 
 export async function getAllExpenses(userId) {
@@ -184,7 +204,11 @@ export async function getAllExpenses(userId) {
     .eq('user_id', userId)
     .order('date', { ascending: false })
   if (error) throw error
-  return data
+  return (data || []).map((e) => ({
+    ...e,
+    type: e.type || 'expense',
+    is_recurring: !!e.is_recurring
+  }))
 }
 
 // ── Budgets ──
@@ -219,17 +243,33 @@ export async function deleteBudget(id) {
 
 // ── Stats Helpers ──
 export async function getMonthStats(userId, month, year) {
-  const expenses = await getExpenses(userId, { month, year })
+  const allItems = await getExpenses(userId, { month, year })
   const budgets = await getBudgets(userId, month, year)
 
-  const total = expenses.reduce((sum, e) => sum + Number(e.amount), 0)
+  const expenses = allItems.filter((item) => (item.type || 'expense') === 'expense')
+  const incomes = allItems.filter((item) => item.type === 'income')
+
+  const totalExpense = expenses.reduce((sum, e) => sum + Number(e.amount), 0)
+  const totalIncome = incomes.reduce((sum, e) => sum + Number(e.amount), 0)
+  const netBalance = totalIncome - totalExpense
+
+  const fixedExpenses = expenses.filter((e) => e.is_recurring).reduce((sum, e) => sum + Number(e.amount), 0)
+  const fixedIncome = incomes.filter((e) => e.is_recurring).reduce((sum, e) => sum + Number(e.amount), 0)
+
   const maxExpense = expenses.length > 0 ? Math.max(...expenses.map((e) => Number(e.amount))) : 0
 
-  // Group by category
-  const byCategory = {}
+  // Group expenses by category
+  const expenseByCategory = {}
   for (const e of expenses) {
-    if (!byCategory[e.category]) byCategory[e.category] = 0
-    byCategory[e.category] += Number(e.amount)
+    if (!expenseByCategory[e.category]) expenseByCategory[e.category] = 0
+    expenseByCategory[e.category] += Number(e.amount)
+  }
+
+  // Group income by category
+  const incomeByCategory = {}
+  for (const i of incomes) {
+    if (!incomeByCategory[i.category]) incomeByCategory[i.category] = 0
+    incomeByCategory[i.category] += Number(i.amount)
   }
 
   // Budget usage per category
@@ -239,27 +279,41 @@ export async function getMonthStats(userId, month, year) {
   }
 
   const totalBudget = budgets.reduce((sum, b) => sum + Number(b.amount), 0)
-  const remaining = totalBudget > 0 ? totalBudget - total : null
+  const remainingBudget = totalBudget > 0 ? totalBudget - totalExpense : null
 
   return {
+    allItems,
     expenses,
-    budgets,
-    total,
+    incomes,
+    totalExpense,
+    totalIncome,
+    netBalance,
+    fixedExpenses,
+    fixedIncome,
     maxExpense,
-    byCategory,
+    expenseByCategory,
+    incomeByCategory,
     budgetMap,
     totalBudget,
-    remaining,
-    count: expenses.length
+    remainingBudget,
+    count: allItems.length
   }
 }
 
 export async function getYearlyStats(userId, year) {
   const monthlyTotals = []
   for (let m = 1; m <= 12; m++) {
-    const expenses = await getExpenses(userId, { month: m, year })
-    const total = expenses.reduce((sum, e) => sum + Number(e.amount), 0)
-    monthlyTotals.push({ month: m, year, total, count: expenses.length })
+    const items = await getExpenses(userId, { month: m, year })
+    const exp = items.filter((i) => (i.type || 'expense') === 'expense').reduce((sum, e) => sum + Number(e.amount), 0)
+    const inc = items.filter((i) => i.type === 'income').reduce((sum, e) => sum + Number(e.amount), 0)
+    monthlyTotals.push({
+      month: m,
+      year,
+      expense: exp,
+      income: inc,
+      net: inc - exp,
+      count: items.length
+    })
   }
   return monthlyTotals
 }
