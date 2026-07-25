@@ -2,7 +2,7 @@
 // MonBudget — Expenses Page (Dépenses)
 // ===========================
 
-import { EXPENSE_CATEGORIES, getCurrentMonthYear, formatMonthYear, formatCurrency, formatDate } from '../utils/helpers.js'
+import { EXPENSE_CATEGORIES, getCurrentMonthYear, formatMonthYear, formatCurrency, formatDate, detectEmoji } from '../utils/helpers.js'
 import { getExpenses } from '../api/supabase.js'
 import { showExpenseModal } from '../components/expense-modal.js'
 
@@ -160,10 +160,11 @@ function renderExpensesList(expenses, user, container) {
             ${grouped[date]
               .map((e) => {
                 const cat = EXPENSE_CATEGORIES.find((c) => c.id === e.category) || EXPENSE_CATEGORIES[EXPENSE_CATEGORIES.length - 1]
+                const itemEmoji = e.icon || detectEmoji(e.description, e.category)
                 return `
               <div class="expense-item" data-id="${e.id}">
                 <div class="expense-icon" style="background: ${cat.bg}; color: ${cat.color}">
-                  ⬇️
+                  ${itemEmoji}
                 </div>
                 <div class="expense-info">
                   <div class="expense-desc" style="display: flex; align-items: center; gap: 6px;">

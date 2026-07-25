@@ -140,9 +140,108 @@ export function exportToCSV(expenses, currency = 'EUR') {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = `monbudget-export-${new Date().toISOString().split('T')[0]}.csv`
+  link.setAttribute('download', `monbudget_export_${new Date().toISOString().slice(0, 10)}.csv`)
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
+}
+
+// ── Emoji Detection & Mapping ──
+export const CATEGORY_EMOJIS = {
+  housing: '🏠',
+  food: '🛒',
+  transport: '⛽',
+  health: '🩺',
+  leisure: '🎬',
+  clothing: '👕',
+  bills: '📄',
+  other_expense: '🏷️',
+
+  salary: '💼',
+  freelance: '💻',
+  investments: '📈',
+  gifts: '🎁',
+  allowance: '🏛️',
+  other_income: '🏷️'
+}
+
+export const EMOJI_MAP = {
+  electricite: '⚡',
+  edf: '⚡',
+  energie: '⚡',
+  eau: '💧',
+  internet: '📶',
+  wifi: '📶',
+  loyer: '🏠',
+  maison: '🏠',
+  appartement: '🏢',
+  travaux: '🛠️',
+
+  courses: '🛒',
+  supermarche: '🛒',
+  carrefour: '🛒',
+  leclerc: '🛒',
+  auchan: '🛒',
+  lidl: '🛒',
+  restaurant: '🍕',
+  resto: '🍕',
+  uber: '🍔',
+  fastfood: '🍔',
+  mcdonalds: '🍔',
+  boulangerie: '🥖',
+  cafe: '☕',
+
+  essence: '⛽',
+  carburant: '⛽',
+  total: '⛽',
+  voiture: '🚗',
+  parking: '🅿️',
+  peage: '🛣️',
+  train: '🚆',
+  sncf: '🚆',
+  navigo: '🚌',
+  bus: '🚌',
+  avion: '✈️',
+
+  pharmacie: '💊',
+  medecin: '🩺',
+  doctolib: '🩺',
+  dentiste: '🦷',
+  mutuelle: '🏥',
+
+  cinema: '🎬',
+  netflix: '🍿',
+  spotify: '🎵',
+  gaming: '🎮',
+  ps5: '🎮',
+  sport: '🏋️',
+  salle: '🏋️',
+  voyage: '🧳',
+
+  zara: '👕',
+  vetements: '👕',
+  chaussures: '👟',
+
+  salaire: '💼',
+  paye: '💼',
+  freelance: '💻',
+  client: '💻',
+  virement: '💸',
+  bourse: '📈',
+  crypto: '🪙',
+  vente: '🎁',
+  vinted: '👗',
+  allocation: '🏛️',
+  caf: '🏛️'
+}
+
+export function detectEmoji(description = '', categoryId = '') {
+  const text = (description || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  for (const [kw, emoji] of Object.entries(EMOJI_MAP)) {
+    if (text.includes(kw)) {
+      return emoji
+    }
+  }
+  return CATEGORY_EMOJIS[categoryId] || '🏷️'
 }

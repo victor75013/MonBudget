@@ -9,6 +9,7 @@ import {
   formatMonthYear,
   getCurrentMonthYear,
   getCategoryById,
+  detectEmoji,
   CATEGORIES
 } from '../utils/helpers.js'
 import { showExpenseModal } from '../components/expense-modal.js'
@@ -174,14 +175,14 @@ function renderRecentExpenses(expenses, user, container) {
     .map((e) => {
       const isIncome = e.type === 'income'
       const cat = getCategoryById(e.category, e.type)
-      const amountClass = isIncome ? 'positive' : 'negative'
       const amountSign = isIncome ? '+' : '-'
       const amountColor = isIncome ? 'var(--accent-secondary)' : 'var(--accent-danger)'
+      const itemEmoji = e.icon || detectEmoji(e.description, e.category)
 
       return `
       <div class="expense-item" style="cursor: default;">
         <div class="expense-icon" style="background: ${cat.bg}; color: ${cat.color}">
-          ${isIncome ? '⬆️' : '⬇️'}
+          ${itemEmoji}
         </div>
         <div class="expense-info">
           <div class="expense-desc" style="display: flex; align-items: center; gap: 6px;">

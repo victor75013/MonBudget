@@ -3,7 +3,13 @@
 // Add / Edit a transaction (Expense or Income)
 // ===========================
 
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, todayISO, escapeHTML } from '../utils/helpers.js'
+import {
+  EXPENSE_CATEGORIES,
+  INCOME_CATEGORIES,
+  todayISO,
+  escapeHTML,
+  detectEmoji
+} from '../utils/helpers.js'
 import { addExpense, updateExpense } from '../api/supabase.js'
 import { toast } from './toast.js'
 
@@ -63,9 +69,18 @@ export function showExpenseModal({ user, expense = null, defaultType = 'expense'
       </div>
 
       <div class="form-group">
-        <label class="form-label">Description</label>
-        <input class="form-input" type="text" id="exp-desc" placeholder="Ex: Salaire, Loyer, Courses"
-          value="${expense ? escapeHTML(expense.description) : ''}" required />
+        <label class="form-label">Description & Icône</label>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button type="button" id="exp-icon-btn" style="width: 44px; height: 44px; font-size: 1.4rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-tertiary); cursor: pointer; flex-shrink: 0;" title="Changer l'icône">
+            ${expense?.icon || detectEmoji(expense?.description, expense?.category)}
+          </button>
+          <input class="form-input" type="text" id="exp-desc" placeholder="Ex: Électricité, Loyer, Courses, Salaire"
+            value="${expense ? escapeHTML(expense.description) : ''}" required style="flex: 1;" />
+        </div>
+        <input type="hidden" id="exp-icon" value="${expense?.icon || ''}" />
+        <div id="emoji-picker-container" style="display: none; margin-top: 8px; padding: 10px; background: var(--bg-tertiary); border-radius: 8px; border: 1px solid var(--border-color); grid-template-columns: repeat(8, 1fr); gap: 6px; text-align: center; font-size: 1.2rem;">
+          ${['⚡', '🏠', '💧', '📶', '🛒', '🍕', '🍔', '🥖', '☕', '⛽', '🚗', '🚆', '🚌', '💊', '🩺', '🎬', '🍿', '🎮', '🏋️', '👕', '📄', '💼', '💻', '📈', '🎁', '🏛️', '🏷️'].map((e) => `<span class="emoji-opt" style="cursor: pointer; padding: 4px; border-radius: 4px;">${e}</span>`).join('')}
+        </div>
       </div>
 
       <div class="form-group">
@@ -145,6 +160,37 @@ export function showExpenseModal({ user, expense = null, defaultType = 'expense'
 
   attachCategoryPickerEvents()
 
+  // Emoji Auto-Detection & Picker
+  const descInput = document.getElementById('exp-desc')
+  const iconBtn = document.getElementById('exp-icon-btn')
+  const iconInput = document.getElementById('exp-icon')
+  const emojiPicker = document.getElementById('emoji-picker-container')
+  let isCustomIcon = !!(expense && expense.icon)
+
+  if (descInput && iconBtn) {
+    descInput.addEventListener('input', () => {
+      if (!isCustomIcon) {
+        const detected = detectEmoji(descInput.value, categoryInput.value)
+        iconBtn.textContent = detected
+      }
+    })
+
+    iconBtn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      emojiPicker.style.display = emojiPicker.style.display === 'grid' ? 'none' : 'grid'
+    })
+
+    emojiPicker.querySelectorAll('.emoji-opt').forEach((opt) => {
+      opt.addEventListener('click', () => {
+        isCustomIcon = true
+        const selected = opt.textContent.trim()
+        iconBtn.textContent = selected
+        iconInput.value = selected
+        emojiPicker.style.display = 'none'
+      })
+    })
+  }
+
   function close() {
     overlay.classList.remove('show')
     setTimeout(() => overlay.remove(), 300)
@@ -163,6 +209,7 @@ export function showExpenseModal({ user, expense = null, defaultType = 'expense'
     const date = document.getElementById('exp-date').value
     const is_recurring = document.getElementById('exp-recurring').checked
     const note = document.getElementById('exp-note').value.trim()
+    const icon = iconInput.value || iconBtn.textContent.trim() || detectEmoji(description, category)
     const errorEl = document.getElementById('expense-form-error')
     const saveBtn = document.getElementById('expense-modal-save')
 
@@ -204,6 +251,7 @@ export function showExpenseModal({ user, expense = null, defaultType = 'expense'
             date,
             type: currentType,
             is_recurring: true,
+            icon,
             note
           })
           toast.success('Nouveau montant récurrent appliqué à partir de cette date !')
@@ -216,6 +264,7 @@ export function showExpenseModal({ user, expense = null, defaultType = 'expense'
             date,
             type: currentType,
             is_recurring,
+            icon,
             note
           })
           toast.success('Transaction modifiée !')
@@ -230,6 +279,7 @@ export function showExpenseModal({ user, expense = null, defaultType = 'expense'
           date,
           type: currentType,
           is_recurring,
+          icon,
           note
         })
         toast.success(currentType === 'income' ? 'Revenu ajouté !' : 'Dépense ajoutée !')
