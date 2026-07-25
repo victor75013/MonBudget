@@ -14,37 +14,58 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Convertit une erreur Supabase en message lisible
-function readableError(error) {
-  if (!error) return 'Une erreur est survenue'
-  if (typeof error === 'string') return error
-  return (
-    error.message ||
-    error.error_description ||
-    error.msg ||
-    (error.details ? String(error.details) : null) ||
-    'Erreur inconnue (vérifiez la console)'
-  )
+function formatSupabaseError(err) {
+  if (!err) return 'Une erreur est survenue'
+  if (typeof err === 'string') return err
+  if (err.message && err.message !== '{}' && err.message !== '[object Object]') {
+    return err.message
+  }
+  if (err.error_description) return err.error_description
+  if (err.msg) return err.msg
+  try {
+    const str = JSON.stringify(err)
+    if (str && str !== '{}') return str
+  } catch (e) {
+    // ignore
+  }
+  return 'Erreur de connexion Supabase. Vérifiez la console (F12) ou la configuration Supabase.'
 }
 
 // ── Auth Helpers ──
 export async function signUp(email, password, username) {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: { data: { username } }
-  })
-  if (error) throw new Error(readableError(error))
-  // Si email confirmation est activée, data.session est null
-  if (!data.session && data.user) {
-    throw new Error('Confirmez votre email avant de vous connecter. Vérifiez votre boîte mail.')
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { username } }
+    })
+    if (error) {
+      console.error('Supabase signUp error:', error)
+      throw new Error(formatSupabaseError(error))
+    }
+    if (!data.session && data.user) {
+      // Email confirmation is still enabled in Supabase
+      return { ...data, requiresConfirmation: true }
+    }
+    return data
+  } catch (err) {
+    console.error('signUp caught error:', err)
+    throw new Error(formatSupabaseError(err))
   }
-  return data
 }
 
 export async function signIn(email, password) {
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-  if (error) throw new Error(readableError(error))
-  return data
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) {
+      console.error('Supabase signIn error:', error)
+      throw new Error(formatSupabaseError(error))
+    }
+    return data
+  } catch (err) {
+    console.error('signIn caught error:', err)
+    throw new Error(formatSupabaseError(err))
+  }
 }
 
 export async function signOut() {

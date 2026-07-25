@@ -70,12 +70,26 @@ export async function renderAuth(container) {
       try {
         if (isLogin) {
           await signIn(email, password)
+          router.navigate('/')
         } else {
           const username = document.getElementById('username').value
-          await signUp(email, password, username)
+          const result = await signUp(email, password, username)
+          if (result?.requiresConfirmation) {
+            errorEl.style.background = 'var(--accent-warning-dim)'
+            errorEl.style.borderColor = 'var(--accent-warning)'
+            errorEl.style.color = 'var(--accent-warning)'
+            errorEl.textContent = 'Compte créé ! Vérifiez votre boîte mail pour confirmer votre email avant de vous connecter.'
+            errorEl.classList.add('show')
+            submitBtn.disabled = false
+            submitBtn.textContent = "S'inscrire"
+          } else {
+            router.navigate('/')
+          }
         }
-        router.navigate('/')
       } catch (err) {
+        errorEl.style.background = ''
+        errorEl.style.borderColor = ''
+        errorEl.style.color = ''
         errorEl.textContent = err.message || 'Une erreur est survenue'
         errorEl.classList.add('show')
         submitBtn.disabled = false
