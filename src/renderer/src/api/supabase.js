@@ -169,32 +169,75 @@ export async function getExpenses(userId, options = {}) {
   const { data, error } = await query
   if (error) throw error
 
-  let items = (data || []).map((e) => ({
+  const rawItems = (data || []).map((e) => ({
     ...e,
     type: e.type || 'expense',
     is_recurring: !!e.is_recurring
   }))
 
-  if (options.month && options.year) {
-    const targetMonthKey = `${options.year}-${String(options.month).padStart(2, '0')}`
-
-    items = items.filter((item) => {
-      const itemMonthKey = item.date ? item.date.substring(0, 7) : ''
-      if (!item.is_recurring) {
-        // Opération ponctuelle: s'applique SEULEMENT pour son mois exact (YYYY-MM)
-        return itemMonthKey === targetMonthKey
-      } else {
-        // Opération fixe/récurrente: s'applique à partir du mois de sa date (itemMonthKey <= targetMonthKey)
-        return itemMonthKey <= targetMonthKey
-      }
-    })
+  if (!options.month || !options.year) {
+    return rawItems
   }
+
+  const targetYear = options.year
+  const targetMonth = options.month
+  const targetMonthKey = `${targetYear}-${String(targetMonth).padStart(2, '0')}`
+
+  // 1. Transactions ponctuelles (is_recurring === false) du mois visualisé
+  const oneTimeItems = rawItems.filter((item) => {
+    if (item.is_recurring) return false
+    const monthKey = item.date ? item.date.substring(0, 7) : ''
+    return monthKey === targetMonthKey
+  })
+
+  // 2. Opérations récurrentes (is_recurring === true)
+  const recurringItems = rawItems.filter((item) => item.is_recurring)
+
+  // Grouper les récurrentes par (type + category + description)
+  const recurringGroups = {}
+  for (const item of recurringItems) {
+    const key = `${item.type}_${item.category}_${(item.description || '').toLowerCase().trim()}`
+    if (!recurringGroups[key]) recurringGroups[key] = []
+    recurringGroups[key].push(item)
+  }
+
+  const activeRecurringItems = []
+
+  for (const key in recurringGroups) {
+    const group = recurringGroups[key]
+    // Filtrer les versions récurrentes dont le mois de début est <= au mois visualisé
+    const validVersions = group.filter((item) => {
+      const startMonthKey = item.date ? item.date.substring(0, 7) : ''
+      return startMonthKey <= targetMonthKey
+    })
+
+    if (validVersions.length > 0) {
+      // Prendre la version récurrente la plus récente pour le mois visualisé
+      validVersions.sort((a, b) => b.date.localeCompare(a.date))
+      const latestVersion = validVersions[0]
+
+      // Adapter la date virtuelle pour conserver le même jour du mois (ex: le 5 du mois)
+      const origDay = latestVersion.date ? parseInt(latestVersion.date.split('-')[2], 10) || 1 : 1
+      const daysInTargetMonth = new Date(targetYear, targetMonth, 0).getDate()
+      const dayToUse = Math.min(origDay, daysInTargetMonth)
+      const virtualDate = `${targetYear}-${String(targetMonth).padStart(2, '0')}-${String(dayToUse).padStart(2, '0')}`
+
+      activeRecurringItems.push({
+        ...latestVersion,
+        date: virtualDate,
+        original_start_date: latestVersion.date
+      })
+    }
+  }
+
+  let result = [...oneTimeItems, ...activeRecurringItems]
+  result.sort((a, b) => b.date.localeCompare(a.date))
 
   if (options.limit) {
-    items = items.slice(0, options.limit)
+    result = result.slice(0, options.limit)
   }
 
-  return items
+  return result
 }
 
 export async function getAllExpenses(userId) {

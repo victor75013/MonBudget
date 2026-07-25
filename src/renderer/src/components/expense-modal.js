@@ -89,16 +89,8 @@ export function showExpenseModal({ user, expense = null, defaultType = 'expense'
           <span>Opération fixe / récurrente (tous les mois)</span>
         </label>
         <div class="form-hint" style="margin-top: 4px; margin-left: 28px;">
-          Ex: Loyer, abonnement, salaire fixe... Sera prise en compte uniquement à partir du mois sélectionné.
+          Ex: Loyer, abonnement, salaire fixe... S'applique chaque mois à partir de la date choisie.
         </div>
-        ${isEdit && expense?.is_recurring ? `
-          <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border-color); margin-left: 28px;">
-            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.8rem; color: var(--text-secondary);">
-              <input type="checkbox" id="exp-keep-history" checked style="width: 16px; height: 16px; cursor: pointer;" />
-              <span>Conserver l'ancien montant pour l'historique des mois passés</span>
-            </label>
-          </div>
-        ` : ''}
       </div>
 
       <div class="form-group">
@@ -196,46 +188,38 @@ export function showExpenseModal({ user, expense = null, defaultType = 'expense'
     saveBtn.textContent = 'Enregistrement...'
 
     try {
-      const keepHistoryInput = document.getElementById('exp-keep-history')
-      const shouldKeepHistory = keepHistoryInput ? keepHistoryInput.checked : true
+      if (isEdit) {
+        const originalMonthKey = expense?.date ? expense.date.substring(0, 7) : ''
+        const newMonthKey = date ? date.substring(0, 7) : ''
 
-      const originalMonthKey = expense?.date ? expense.date.substring(0, 7) : ''
-      const newMonthKey = date ? date.substring(0, 7) : ''
-      const dateMonthChanged = isEdit && originalMonthKey !== newMonthKey
-
-      if (isEdit && expense.is_recurring && (shouldKeepHistory || dateMonthChanged)) {
-        // 1. L'ancienne transaction reste inchangée dans son mois d'origine avec son ancienne date et son ancien montant,
-        //    mais n'est plus récurrente afin de ne plus impacter les mois futurs.
-        await updateExpense(expense.id, {
-          amount: Number(expense.amount),
-          date: expense.date,
-          is_recurring: false
-        })
-
-        // 2. La nouvelle transaction récurrente prend le relais à la NOUVELLE date choisie avec le NOUVEAU montant
-        await addExpense({
-          user_id: user.id,
-          amount,
-          description,
-          category,
-          date, // Nouvelle date choisie (ex: 2026-08-01)
-          type: currentType,
-          is_recurring,
-          note
-        })
-        toast.success('Nouveau montant appliqué à partir de cette date !')
-      } else if (isEdit) {
-        // Simple mise à jour au sein du même mois
-        await updateExpense(expense.id, {
-          amount,
-          description,
-          category,
-          date,
-          type: currentType,
-          is_recurring,
-          note
-        })
-        toast.success('Transaction modifiée !')
+        if (expense.is_recurring && is_recurring && (amount !== Number(expense.amount) || originalMonthKey !== newMonthKey)) {
+          // Si le montant ou le mois change pour une opération récurrente :
+          // On crée une nouvelle version récurrente à cette nouvelle date.
+          // L'ancienne version récurrente reste intacte dans la BDD pour l'historique des mois passés.
+          await addExpense({
+            user_id: user.id,
+            amount,
+            description,
+            category,
+            date,
+            type: currentType,
+            is_recurring: true,
+            note
+          })
+          toast.success('Nouveau montant récurrent appliqué à partir de cette date !')
+        } else {
+          // Simple mise à jour au sein du même mois
+          await updateExpense(expense.id, {
+            amount,
+            description,
+            category,
+            date,
+            type: currentType,
+            is_recurring,
+            note
+          })
+          toast.success('Transaction modifiée !')
+        }
       } else {
         // Création initiale
         await addExpense({
