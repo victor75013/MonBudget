@@ -154,10 +154,6 @@ export async function getExpenses(userId, options = {}) {
     .order('date', { ascending: false })
     .order('created_at', { ascending: false })
 
-  if (options.type && options.type !== 'all') {
-    query = query.eq('type', options.type)
-  }
-
   if (options.category) {
     query = query.eq('category', options.category)
   }
@@ -169,14 +165,21 @@ export async function getExpenses(userId, options = {}) {
   const { data, error } = await query
   if (error) throw error
 
+  // Remplir les valeurs par défaut (si type est null en BDD, c'est 'expense')
   const rawItems = (data || []).map((e) => ({
     ...e,
     type: e.type || 'expense',
     is_recurring: !!e.is_recurring
   }))
 
+  // Filtrer strictement par type ('expense' ou 'income')
+  let filteredItems = rawItems
+  if (options.type && options.type !== 'all') {
+    filteredItems = rawItems.filter((item) => item.type === options.type)
+  }
+
   if (!options.month || !options.year) {
-    return rawItems
+    return filteredItems
   }
 
   const targetYear = options.year
@@ -184,14 +187,14 @@ export async function getExpenses(userId, options = {}) {
   const targetMonthKey = `${targetYear}-${String(targetMonth).padStart(2, '0')}`
 
   // 1. Transactions ponctuelles (is_recurring === false) du mois visualisé
-  const oneTimeItems = rawItems.filter((item) => {
+  const oneTimeItems = filteredItems.filter((item) => {
     if (item.is_recurring) return false
     const monthKey = item.date ? item.date.substring(0, 7) : ''
     return monthKey === targetMonthKey
   })
 
   // 2. Opérations récurrentes (is_recurring === true)
-  const recurringItems = rawItems.filter((item) => item.is_recurring)
+  const recurringItems = filteredItems.filter((item) => item.is_recurring)
 
   // Grouper les récurrentes par (type + category + description)
   const recurringGroups = {}

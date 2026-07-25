@@ -132,33 +132,33 @@ async function loadExpenses(user) {
 }
 
 function renderExpenseList(expenses, user, container) {
+  const isIncomeList = currentFilters.type === 'income'
+
   if (expenses.length === 0) {
     container.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-title">Aucune transaction trouvée</div>
-        <div class="empty-state-text">Aucune dépense ou revenu ne correspond à vos filtres pour cette période.</div>
+      <div class="empty-state" style="padding: 40px 20px;">
+        <div class="empty-state-title">${isIncomeList ? 'Aucun revenu trouvé' : 'Aucune dépense trouvée'}</div>
+        <div class="empty-state-text">
+          ${isIncomeList ? 'Vous n’avez aucun revenu enregistré pour ce mois.' : 'Vous n’avez aucune dépense enregistrée pour ce mois.'}
+        </div>
       </div>
     `
     return
   }
 
-  // Totaux
-  const totalExp = expenses.filter((e) => e.type !== 'income').reduce((sum, e) => sum + Number(e.amount), 0)
-  const totalInc = expenses.filter((e) => e.type === 'income').reduce((sum, e) => sum + Number(e.amount), 0)
-  const net = totalInc - totalExp
+  const totalAmount = expenses.reduce((sum, e) => sum + Number(e.amount), 0)
 
   // Group by date
   const grouped = groupBy(expenses, (e) => e.date)
   const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a))
 
-  const isIncomeList = currentFilters.type === 'income'
-  const totalAmount = expenses.reduce((sum, e) => sum + Number(e.amount), 0)
-
   container.innerHTML = `
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; font-size: 0.9rem; background: var(--bg-secondary); padding: 14px 18px; border-radius: 12px; border: 1px solid var(--border-color); flex-wrap: wrap; gap: 8px;">
-      <div style="color: var(--text-muted); font-weight: 500;">${expenses.length} ${isIncomeList ? 'revenu' : 'dépense'}${expenses.length > 1 ? 's' : ''}</div>
-      <div style="font-weight: 800; font-size: 1.1rem; color: ${isIncomeList ? 'var(--accent-secondary)' : 'var(--accent-danger)'};">
-        Total: ${isIncomeList ? '+' : '-'}${formatCurrency(totalAmount)}
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; font-size: 0.95rem; background: var(--bg-secondary); padding: 14px 20px; border-radius: 12px; border: 1px solid var(--border-color); flex-wrap: wrap; gap: 8px;">
+      <div style="color: var(--text-secondary); font-weight: 500;">
+        ${expenses.length} ${isIncomeList ? 'revenu' : 'dépense'}${expenses.length > 1 ? 's' : ''}
+      </div>
+      <div style="font-weight: 800; font-size: 1.15rem; color: ${isIncomeList ? 'var(--accent-secondary)' : 'var(--accent-danger)'};">
+        Total ${isIncomeList ? 'revenus' : 'dépenses'}: ${isIncomeList ? '+' : '-'}${formatCurrency(totalAmount)}
       </div>
     </div>
     <div class="expenses-list">
