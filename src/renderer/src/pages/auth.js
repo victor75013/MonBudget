@@ -4,6 +4,7 @@
 
 import { signIn, signUp } from '../api/supabase.js'
 import { router } from '../utils/router.js'
+import logoUrl from '../../assets/logo.png'
 
 export async function renderAuth(container) {
   let isLogin = true
@@ -13,6 +14,7 @@ export async function renderAuth(container) {
       <div class="auth-page">
         <div class="auth-card">
           <div class="auth-logo">
+            <img src="${logoUrl}" alt="MonBudget Logo" class="auth-logo-img" />
             <h1>Mon<span class="accent">Budget</span></h1>
             <div class="auth-logo-sub">Gestion des dépenses</div>
           </div>

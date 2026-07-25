@@ -4,6 +4,7 @@
 
 import { router } from '../utils/router.js'
 import { signOut } from '../api/supabase.js'
+import logoUrl from '../../assets/logo.png'
 
 export function renderNavbar(container, user) {
   const username = user?.user_metadata?.username || user?.email?.split('@')[0] || 'U'
@@ -12,6 +13,7 @@ export function renderNavbar(container, user) {
   container.innerHTML = `
     <nav class="navbar" id="main-navbar">
       <a class="navbar-brand" data-nav="/">
+        <img src="${logoUrl}" alt="MonBudget Logo" class="navbar-logo" />
         <span>Mon<span class="brand-accent">Budget</span></span>
       </a>
 

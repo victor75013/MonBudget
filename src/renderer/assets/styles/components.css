@@ -128,6 +128,13 @@
   color: var(--accent-primary);
 }
 
+.navbar-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
 .navbar-nav {
   display: flex;
   align-items: center;

@@ -1,6 +1,7 @@
 node_modules
 dist
 out
-build
+build/*
+!build/icon.png
 .eslintcache
 *.log

@@ -13,6 +13,7 @@ function createWindow() {
     autoHideMenuBar: true,
     backgroundColor: '#0f1117',
     title: 'MonBudget',
+    icon: join(__dirname, '../../build/icon.png'),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false

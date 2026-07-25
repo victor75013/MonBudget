@@ -43,6 +43,14 @@
   margin-bottom: var(--space-xl);
 }
 
+.auth-logo-img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  margin-bottom: var(--space-xs);
+  border-radius: 12px;
+}
+
 .auth-logo h1 {
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-extrabold);
