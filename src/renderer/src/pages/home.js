@@ -117,33 +117,40 @@ function renderStats(stats) {
   const balanceSign = stats.netBalance > 0 ? '+' : ''
 
   document.getElementById('stats-grid-container').innerHTML = `
-    <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-      <div class="stat-card" style="--card-accent: var(--accent-secondary)">
-        <div class="stat-card-label">Revenus ce mois</div>
-        <div class="stat-card-value" style="color: var(--accent-secondary)">+${formatCurrency(stats.totalIncome)}</div>
-        <div class="stat-card-sub">${stats.incomes.length} transaction${stats.incomes.length > 1 ? 's' : ''}</div>
-      </div>
-      <div class="stat-card" style="--card-accent: var(--accent-danger)">
-        <div class="stat-card-label">Dépenses ce mois</div>
-        <div class="stat-card-value" style="color: var(--accent-danger)">-${formatCurrency(stats.totalExpense)}</div>
-        <div class="stat-card-sub">${stats.expenses.length} transaction${stats.expenses.length > 1 ? 's' : ''}</div>
-      </div>
-      <div class="stat-card" style="--card-accent: ${balanceColor}">
-        <div class="stat-card-label">Solde net</div>
-        <div class="stat-card-value" style="color: ${balanceColor}">
-          ${balanceSign}${formatCurrency(stats.netBalance)}
+    <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px;">
+      <!-- Ligne 1 : Synthèse du mois -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+        <div class="stat-card" style="--card-accent: var(--accent-secondary)">
+          <div class="stat-card-label">Revenus ce mois</div>
+          <div class="stat-card-value" style="color: var(--accent-secondary)">+${formatCurrency(stats.totalIncome)}</div>
+          <div class="stat-card-sub">${stats.incomes.length} transaction${stats.incomes.length > 1 ? 's' : ''}</div>
         </div>
-        <div class="stat-card-sub">${stats.netBalance >= 0 ? 'Capacité d\'épargne' : 'Déficit ce mois'}</div>
+        <div class="stat-card" style="--card-accent: var(--accent-danger)">
+          <div class="stat-card-label">Dépenses ce mois</div>
+          <div class="stat-card-value" style="color: var(--accent-danger)">-${formatCurrency(stats.totalExpense)}</div>
+          <div class="stat-card-sub">${stats.expenses.length} transaction${stats.expenses.length > 1 ? 's' : ''}</div>
+        </div>
+        <div class="stat-card" style="--card-accent: ${balanceColor}">
+          <div class="stat-card-label">Solde net</div>
+          <div class="stat-card-value" style="color: ${balanceColor}">
+            ${balanceSign}${formatCurrency(stats.netBalance)}
+          </div>
+          <div class="stat-card-sub">${stats.netBalance >= 0 ? 'Capacité d\'épargne' : 'Déficit ce mois'}</div>
+        </div>
       </div>
-      <div class="stat-card" style="--card-accent: var(--accent-secondary)">
-        <div class="stat-card-label">Revenus fixes</div>
-        <div class="stat-card-value" style="color: var(--accent-secondary)">+${formatCurrency(stats.fixedIncome)}</div>
-        <div class="stat-card-sub">Entrées récurrentes</div>
-      </div>
-      <div class="stat-card" style="--card-accent: var(--accent-primary)">
-        <div class="stat-card-label">Charges fixes</div>
-        <div class="stat-card-value">${formatCurrency(stats.fixedExpenses)}</div>
-        <div class="stat-card-sub">Prélèvements récurrents</div>
+
+      <!-- Ligne 2 : Opérations récurrentes -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+        <div class="stat-card" style="--card-accent: var(--accent-secondary)">
+          <div class="stat-card-label">Revenus fixes</div>
+          <div class="stat-card-value" style="color: var(--accent-secondary)">+${formatCurrency(stats.fixedIncome)}</div>
+          <div class="stat-card-sub">Entrées récurrentes</div>
+        </div>
+        <div class="stat-card" style="--card-accent: var(--accent-primary)">
+          <div class="stat-card-label">Charges fixes</div>
+          <div class="stat-card-value">${formatCurrency(stats.fixedExpenses)}</div>
+          <div class="stat-card-sub">Prélèvements récurrents</div>
+        </div>
       </div>
     </div>
   `
