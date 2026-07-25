@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*.*.*'
 
+permissions:
+  contents: write
+
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -16,24 +19,22 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
+
+      - name: Create .env file
+        shell: pwsh
+        run: |
+          $envContent = "RENDERER_VITE_SUPABASE_URL=${{ secrets.SUPABASE_URL }}`nRENDERER_VITE_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}"
+          Set-Content -Path ".env" -Value $envContent -Encoding UTF8
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Create .env file
-        run: |
-          echo "RENDERER_VITE_SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
-          echo "RENDERER_VITE_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
+      - name: Build app
+        run: npm run build
 
-      - name: Build and package Windows
-        run: npm run build:win
+      - name: Package Windows
+        run: npx electron-builder --win --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: MonBudget-Windows
-          path: dist/*.exe
