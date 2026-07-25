@@ -18,6 +18,7 @@ export function renderNavbar(container, user) {
       <div class="navbar-nav">
         <a class="nav-link" data-nav="/" data-route="/">Accueil</a>
         <a class="nav-link" data-nav="/expenses" data-route="/expenses">Dépenses</a>
+        <a class="nav-link" data-nav="/incomes" data-route="/incomes">Revenus</a>
         <a class="nav-link" data-nav="/budgets" data-route="/budgets">Budgets</a>
         <a class="nav-link" data-nav="/stats" data-route="/stats">Stats</a>
       </div>

@@ -18,18 +18,22 @@ import { toast } from '../components/toast.js'
 
 let currentFilters = {}
 
-export async function renderExpenses(container, user) {
+export async function renderExpenses(container, user, initialType = 'expense') {
   const { month, year } = getCurrentMonthYear()
-  currentFilters = { month, year, type: 'all', category: '', search: '' }
+  const isIncomeMode = initialType === 'income'
+  const filterType = isIncomeMode ? 'income' : 'expense'
+  const activeCategories = isIncomeMode ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
+  const pageTitle = isIncomeMode ? 'Mes revenus' : 'Mes dépenses'
+  const addBtnText = isIncomeMode ? '+ Nouveau revenu' : '+ Nouvelle dépense'
+  const addBtnClass = isIncomeMode ? 'btn-teal' : 'btn-primary'
+
+  currentFilters = { month, year, type: filterType, category: '', search: '' }
 
   container.innerHTML = `
     <div class="page-container fade-in">
       <div class="expenses-toolbar">
-        <h2>Mes transactions</h2>
-        <div style="display: flex; gap: 8px;">
-          <button class="btn btn-teal" id="add-income-btn">+ Revenu</button>
-          <button class="btn btn-primary" id="add-expense-btn">+ Dépense</button>
-        </div>
+        <h2>${pageTitle}</h2>
+        <button class="btn ${addBtnClass}" id="add-transaction-btn">${addBtnText}</button>
       </div>
 
       <!-- Période et filtres -->
@@ -40,20 +44,13 @@ export async function renderExpenses(container, user) {
           <button id="next-month">▶</button>
         </div>
 
-        <!-- Filter type -->
-        <select class="form-select" id="filter-type" style="width: 150px;">
-          <option value="all">Tous types</option>
-          <option value="expense">Dépenses</option>
-          <option value="income">Revenus</option>
-        </select>
-
-        <select class="form-select" id="filter-category" style="width: 180px;">
+        <select class="form-select" id="filter-category" style="width: 190px;">
           <option value="">Toutes catégories</option>
-          ${CATEGORIES.map((c) => `<option value="${c.id}">${c.label}</option>`).join('')}
+          ${activeCategories.map((c) => `<option value="${c.id}">${c.label}</option>`).join('')}
         </select>
 
         <input class="form-input" type="text" id="filter-search"
-          placeholder="Rechercher..." style="max-width: 200px;" />
+          placeholder="Rechercher..." style="max-width: 220px;" />
 
         <button class="btn btn-secondary btn-sm" id="reset-filters">↺ Réinitialiser</button>
       </div>
@@ -66,12 +63,8 @@ export async function renderExpenses(container, user) {
     </div>
   `
 
-  document.getElementById('add-expense-btn').addEventListener('click', () => {
-    showExpenseModal({ user, defaultType: 'expense', onSaved: () => loadExpenses(user) })
-  })
-
-  document.getElementById('add-income-btn').addEventListener('click', () => {
-    showExpenseModal({ user, defaultType: 'income', onSaved: () => loadExpenses(user) })
+  document.getElementById('add-transaction-btn').addEventListener('click', () => {
+    showExpenseModal({ user, defaultType: filterType, onSaved: () => loadExpenses(user) })
   })
 
   document.getElementById('prev-month').addEventListener('click', () => {
@@ -94,11 +87,6 @@ export async function renderExpenses(container, user) {
     loadExpenses(user)
   })
 
-  document.getElementById('filter-type').addEventListener('change', (e) => {
-    currentFilters.type = e.target.value
-    loadExpenses(user)
-  })
-
   document.getElementById('filter-category').addEventListener('change', (e) => {
     currentFilters.category = e.target.value
     loadExpenses(user)
@@ -115,8 +103,7 @@ export async function renderExpenses(container, user) {
 
   document.getElementById('reset-filters').addEventListener('click', () => {
     const { month: m, year: y } = getCurrentMonthYear()
-    currentFilters = { month: m, year: y, type: 'all', category: '', search: '' }
-    document.getElementById('filter-type').value = 'all'
+    currentFilters = { month: m, year: y, type: filterType, category: '', search: '' }
     document.getElementById('filter-category').value = ''
     document.getElementById('filter-search').value = ''
     updatePeriodLabel()
@@ -164,13 +151,14 @@ function renderExpenseList(expenses, user, container) {
   const grouped = groupBy(expenses, (e) => e.date)
   const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a))
 
+  const isIncomeList = currentFilters.type === 'income'
+  const totalAmount = expenses.reduce((sum, e) => sum + Number(e.amount), 0)
+
   container.innerHTML = `
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; font-size: 0.85rem; background: var(--bg-secondary); padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border-color); flex-wrap: wrap; gap: 8px;">
-      <div style="color: var(--text-muted);">${expenses.length} transaction${expenses.length > 1 ? 's' : ''}</div>
-      <div style="display: flex; gap: 16px;">
-        <span style="color: var(--accent-secondary); font-weight: 600;">Revenus: +${formatCurrency(totalInc)}</span>
-        <span style="color: var(--accent-danger); font-weight: 600;">Dépenses: -${formatCurrency(totalExp)}</span>
-        <span style="color: ${net >= 0 ? 'var(--accent-secondary)' : 'var(--accent-danger)'}; font-weight: 700;">Net: ${net >= 0 ? '+' : ''}${formatCurrency(net)}</span>
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; font-size: 0.9rem; background: var(--bg-secondary); padding: 14px 18px; border-radius: 12px; border: 1px solid var(--border-color); flex-wrap: wrap; gap: 8px;">
+      <div style="color: var(--text-muted); font-weight: 500;">${expenses.length} ${isIncomeList ? 'revenu' : 'dépense'}${expenses.length > 1 ? 's' : ''}</div>
+      <div style="font-weight: 800; font-size: 1.1rem; color: ${isIncomeList ? 'var(--accent-secondary)' : 'var(--accent-danger)'};">
+        Total: ${isIncomeList ? '+' : '-'}${formatCurrency(totalAmount)}
       </div>
     </div>
     <div class="expenses-list">

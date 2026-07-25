@@ -65,7 +65,11 @@ async function init() {
     })
     .on('/expenses', async () => {
       updateActiveNav()
-      await renderExpenses(contentContainer, currentUser)
+      await renderExpenses(contentContainer, currentUser, 'expense')
+    })
+    .on('/incomes', async () => {
+      updateActiveNav()
+      await renderExpenses(contentContainer, currentUser, 'income')
     })
     .on('/budgets', async () => {
       updateActiveNav()
