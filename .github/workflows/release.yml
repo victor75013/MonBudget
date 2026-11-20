@@ -35,6 +35,14 @@ jobs:
         run: npm run build
 
       - name: Package Windows
-        run: npx electron-builder --win --publish always
+        run: npx electron-builder --win --publish never
+
+      - name: Publish Windows release
+        shell: pwsh
+        run: |
+          $version = (Get-Content -Raw package.json | ConvertFrom-Json).version
+          if ($env:GITHUB_REF_NAME -ne "v$version") { throw 'Tag and package version differ' }
+          $installer = "dist/monbudget-$version-setup.exe"
+          gh release create $env:GITHUB_REF_NAME $installer "$installer.blockmap" dist/latest.yml --verify-tag --title "MonBudget $version" --generate-notes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

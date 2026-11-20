@@ -41,4 +41,3 @@ publish:
   provider: github
   owner: victor75013
   repo: MonBudget
-  releaseType: release
