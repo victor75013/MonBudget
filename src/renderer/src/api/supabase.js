@@ -8,7 +8,7 @@ const supabaseUrl = import.meta.env.RENDERER_VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.RENDERER_VITE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('❌ Supabase env vars manquantes :', { supabaseUrl, supabaseAnonKey })
+  throw new Error('Configuration Supabase manquante.')
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)

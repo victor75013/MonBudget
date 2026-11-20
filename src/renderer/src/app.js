@@ -26,7 +26,7 @@ let currentUser = null
 let navbarContainer = null
 let contentContainer = null
 
-async function init() {
+export async function init() {
   const app = document.getElementById('app')
   app.innerHTML = `
     <div id="navbar-container"></div>
@@ -121,7 +121,3 @@ async function init() {
     router.navigate(currentUser ? '/' : '/auth')
   }
 }
-
-init().catch((err) => {
-  console.error('App init error:', err)
-})

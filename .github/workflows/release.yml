@@ -22,11 +22,11 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
-      - name: Create .env file
-        shell: pwsh
-        run: |
-          $envContent = "RENDERER_VITE_SUPABASE_URL=${{ secrets.SUPABASE_URL }}`nRENDERER_VITE_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}"
-          Set-Content -Path ".env" -Value $envContent -Encoding UTF8
+      - name: Validate public Supabase configuration
+        run: >
+          node --env-file=.env -e "if (process.env.RENDERER_VITE_SUPABASE_URL !== 'https://kqzpxgrgydrdbscfkemy.supabase.co' ||
+          !/^sb_publishable_[A-Za-z0-9_-]+$/.test(process.env.RENDERER_VITE_SUPABASE_ANON_KEY || ''))
+          throw new Error('Invalid public Supabase configuration')"
 
       - name: Install dependencies
         run: npm ci
