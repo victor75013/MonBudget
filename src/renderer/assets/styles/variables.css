@@ -1,66 +1,66 @@
 /* ===========================
    MonBudget — Design Tokens
-   Dark theme, violet/teal palette
+   Light theme, warm neutrals and evergreen
    =========================== */
 
 /* Font loaded via index.html <link> tag */
 
 :root {
   /* ── Background Colors ── */
-  --bg-primary: #0f1117;
-  --bg-secondary: #161b27;
-  --bg-tertiary: #1e2535;
-  --bg-elevated: #252d3d;
-  --bg-hover: #2a3347;
-  --bg-input: #1e2535;
-  --bg-overlay: rgba(0, 0, 0, 0.75);
-  --bg-modal: #161b27;
+  --bg-primary: #f7f7f1;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f4ee;
+  --bg-elevated: #e0e6dd;
+  --bg-hover: #e9efe7;
+  --bg-input: #f1f4ee;
+  --bg-overlay: rgba(25, 48, 38, 0.44);
+  --bg-modal: #ffffff;
 
   /* ── Text Colors ── */
-  --text-primary: #f0f2f5;
-  --text-secondary: #8892a4;
-  --text-muted: #546072;
-  --text-link: #6c63ff;
-  --text-inverse: #0f1117;
+  --text-primary: #21362d;
+  --text-secondary: #4d6258;
+  --text-muted: #607269;
+  --text-link: #24634d;
+  --text-inverse: #ffffff;
 
   /* ── Accent Colors ── */
-  --accent-primary: #6c63ff;
-  --accent-primary-hover: #5a52e0;
-  --accent-primary-dim: rgba(108, 99, 255, 0.15);
-  --accent-secondary: #00d4aa;
-  --accent-secondary-hover: #00b893;
-  --accent-secondary-dim: rgba(0, 212, 170, 0.15);
-  --accent-warning: #f59e0b;
+  --accent-primary: #24634d;
+  --accent-primary-hover: #194c39;
+  --accent-primary-dim: #e7f3e9;
+  --accent-secondary: #19705a;
+  --accent-secondary-hover: #145a47;
+  --accent-secondary-dim: #e2f4ed;
+  --accent-warning: #9a570c;
   --accent-warning-dim: rgba(245, 158, 11, 0.15);
-  --accent-danger: #ef4444;
-  --accent-danger-hover: #dc2626;
+  --accent-danger: #b6323e;
+  --accent-danger-hover: #922634;
   --accent-danger-dim: rgba(239, 68, 68, 0.15);
-  --accent-success: #22c55e;
+  --accent-success: #24713e;
   --accent-success-dim: rgba(34, 197, 94, 0.15);
-  --accent-blue: #3b82f6;
+  --accent-blue: #315e9a;
   --accent-blue-dim: rgba(59, 130, 246, 0.15);
 
   /* ── Category Colors ── */
   --cat-food: #f97316;
-  --cat-transport: #3b82f6;
+  --cat-transport: #315e9a;
   --cat-housing: #8b5cf6;
-  --cat-health: #ef4444;
+  --cat-health: #b6323e;
   --cat-leisure: #ec4899;
-  --cat-clothes: #f59e0b;
+  --cat-clothes: #9a570c;
   --cat-bills: #06b6d4;
   --cat-other: #6b7280;
 
   /* ── Borders ── */
-  --border-color: #252d3d;
-  --border-hover: #3a4560;
-  --border-focus: #6c63ff;
+  --border-color: #e0e6dd;
+  --border-hover: #aabdb1;
+  --border-focus: #24634d;
 
   /* ── Shadows ── */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 24px rgba(108, 99, 255, 0.2);
-  --shadow-glow-teal: 0 0 24px rgba(0, 212, 170, 0.2);
+  --shadow-sm: 0 1px 3px rgba(33, 54, 45, 0.06);
+  --shadow-md: 0 4px 12px rgba(33, 54, 45, 0.09);
+  --shadow-lg: 0 8px 32px rgba(33, 54, 45, 0.14);
+  --shadow-glow: 0 0 24px rgba(36, 99, 77, 0.14);
+  --shadow-glow-teal: 0 0 24px rgba(25, 112, 90, 0.14);
 
   /* ── Typography ── */
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -101,8 +101,8 @@
   --radius-full: 50%;
 
   /* ── Layout ── */
-  --navbar-height: 60px;
-  --content-max-width: 1100px;
+  --navbar-height: 68px;
+  --content-max-width: 1160px;
 
   /* ── Transitions ── */
   --transition-fast: 150ms ease;

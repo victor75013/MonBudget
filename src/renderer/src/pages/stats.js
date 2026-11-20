@@ -81,6 +81,11 @@ function renderBarChart(yearlyData, year) {
   import('chart.js').then(({ Chart, BarElement, CategoryScale, LinearScale, Tooltip, Legend, BarController }) => {
     Chart.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, BarController)
 
+    const palette = getComputedStyle(canvas)
+    const incomeColor = palette.getPropertyValue('--accent-secondary').trim()
+    const expenseColor = palette.getPropertyValue('--accent-danger').trim()
+    const textColor = palette.getPropertyValue('--text-secondary').trim()
+    const gridColor = palette.getPropertyValue('--border-color').trim()
     const labels = yearlyData.map((d) => getMonthName(d.month, year).substring(0, 3))
     const expenseData = yearlyData.map((d) => d.expense)
     const incomeData = yearlyData.map((d) => d.income)
@@ -93,16 +98,16 @@ function renderBarChart(yearlyData, year) {
           {
             label: 'Revenus',
             data: incomeData,
-            backgroundColor: 'rgba(0, 212, 170, 0.8)',
-            borderColor: 'rgba(0, 212, 170, 1)',
+            backgroundColor: incomeColor,
+            borderColor: incomeColor,
             borderWidth: 1,
             borderRadius: 6
           },
           {
             label: 'Dépenses',
             data: expenseData,
-            backgroundColor: 'rgba(239, 68, 68, 0.8)',
-            borderColor: 'rgba(239, 68, 68, 1)',
+            backgroundColor: expenseColor,
+            borderColor: expenseColor,
             borderWidth: 1,
             borderRadius: 6
           }
@@ -115,7 +120,7 @@ function renderBarChart(yearlyData, year) {
           legend: {
             display: true,
             position: 'top',
-            labels: { color: '#8892a4', font: { size: 12 } }
+            labels: { color: textColor, font: { size: 12 } }
           },
           tooltip: {
             callbacks: {
@@ -125,13 +130,13 @@ function renderBarChart(yearlyData, year) {
         },
         scales: {
           x: {
-            grid: { color: 'rgba(255,255,255,0.04)' },
-            ticks: { color: '#8892a4', font: { size: 11 } }
+            grid: { color: gridColor },
+            ticks: { color: textColor, font: { size: 11 } }
           },
           y: {
-            grid: { color: 'rgba(255,255,255,0.04)' },
+            grid: { color: gridColor },
             ticks: {
-              color: '#8892a4',
+              color: textColor,
               font: { size: 11 },
               callback: (v) => formatCurrency(v)
             }

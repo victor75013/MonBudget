@@ -57,6 +57,13 @@ button {
   color: inherit;
 }
 
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 3px;
+}
+
 input,
 textarea,
 select {
@@ -152,6 +159,14 @@ h6 {
 
 .fade-out {
   animation: fadeOut 120ms ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in,
+  .fade-out,
+  .skeleton {
+    animation: none;
+  }
 }
 
 @keyframes fadeIn {

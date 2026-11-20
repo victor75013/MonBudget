@@ -2,7 +2,7 @@
 // MonBudget — Incomes Page (Revenus)
 // ===========================
 
-import { INCOME_CATEGORIES, getCurrentMonthYear, formatMonthYear, formatCurrency, formatDate, detectEmoji } from '../utils/helpers.js'
+import { INCOME_CATEGORIES, getCurrentMonthYear, formatMonthYear, formatCurrency, formatDate, detectEmoji, escapeHTML } from '../utils/helpers.js'
 import { getExpenses } from '../api/supabase.js'
 import { showExpenseModal } from '../components/expense-modal.js'
 
@@ -168,7 +168,7 @@ function renderIncomesList(incomes, user, container) {
                 </div>
                 <div class="expense-info">
                   <div class="expense-desc" style="display: flex; align-items: center; gap: 6px;">
-                    <span>${e.description}</span>
+                    <span>${escapeHTML(e.description)}</span>
                     ${e.is_recurring ? `<span style="font-size: 0.7rem; background: var(--bg-tertiary); border: 1px solid var(--border-color); padding: 1px 6px; border-radius: 4px; color: var(--accent-primary);">Fixe</span>` : ''}
                   </div>
                   <div class="expense-meta">

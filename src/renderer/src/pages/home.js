@@ -4,39 +4,59 @@
 
 import { getMonthStats } from '../api/supabase.js'
 import {
+  escapeHTML,
   formatCurrency,
   formatShortDate,
   formatMonthYear,
   getCurrentMonthYear,
   getCategoryById,
-  detectEmoji,
-  CATEGORIES
+  detectEmoji
 } from '../utils/helpers.js'
 import { showExpenseModal } from '../components/expense-modal.js'
+import { budgetSections } from '../components/navbar.js'
 
 let chartInstance = null
+let chartRevision = 0
 
 export async function renderHome(container, user) {
   const { month, year } = getCurrentMonthYear()
 
   container.innerHTML = `
-    <div class="page-container fade-in">
-      <div class="dashboard-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+    <div class="page-container home-page fade-in">
+      <section class="home-welcome" aria-labelledby="home-title">
         <div>
-          <div class="dashboard-greeting">
-            Bonjour, <span>${user?.user_metadata?.username || user?.email?.split('@')[0] || 'vous'}</span>
+          <p class="home-period">${formatMonthYear(month, year)}</p>
+          <h1 id="home-title">Bonjour, ${escapeHTML(user?.user_metadata?.username || user?.email?.split('@')[0] || 'vous')}</h1>
+          <div class="home-actions">
+            <button class="btn btn-primary" id="quick-add-expense">+ Dépense</button>
+            <button class="btn btn-secondary" id="quick-add-income">+ Revenu</button>
           </div>
-          <div class="dashboard-date">${formatMonthYear(month, year)}</div>
         </div>
-        <div style="display: flex; gap: 8px;">
-          <button class="btn btn-teal btn-sm" id="quick-add-income">+ Revenu</button>
-          <button class="btn btn-primary btn-sm" id="quick-add-expense">+ Dépense</button>
+        <div class="home-balance" aria-live="polite">
+          <span>Solde net du mois</span>
+          <strong id="home-balance-amount" aria-label="Solde en cours de chargement">—</strong>
         </div>
-      </div>
+      </section>
 
+      <nav class="home-navigation" aria-labelledby="home-navigation-title">
+        <h2 class="section-title" id="home-navigation-title">Vos rubriques</h2>
+        <div class="home-section-grid">
+          ${budgetSections.map(({ route, label, description, tone, icon }) => `
+            <a class="home-section home-section--${tone}" href="#${route}">
+              <span class="home-section-icon" aria-hidden="true">${icon}</span>
+              <span class="home-section-arrow" aria-hidden="true">→</span>
+              <strong>${label}</strong>
+              <span class="home-section-description">${description}</span>
+            </a>
+          `).join('')}
+        </div>
+      </nav>
+
+      <section aria-labelledby="home-summary-title">
+      <h2 class="section-title home-summary-title" id="home-summary-title">Ce mois-ci</h2>
       <div id="stats-grid-container">
         <div class="stats-grid">
-          ${[1, 2, 3, 4, 5].map(() => `<div class="stat-card skeleton" style="height: 110px;"></div>`).join('')}
+          ${[1, 2, 3, 4].map(() => `<div class="stat-card skeleton" style="height: 110px;"></div>`).join('')}
         </div>
       </div>
 
@@ -64,8 +84,10 @@ export async function renderHome(container, user) {
           </div>
         </div>
       </div>
+      </section>
     </div>
   `
+  const page = container.firstElementChild
 
   document.getElementById('quick-add-expense').addEventListener('click', () => {
     showExpenseModal({
@@ -85,10 +107,10 @@ export async function renderHome(container, user) {
 
   try {
     const stats = await getMonthStats(user.id, month, year)
+    if (!page.isConnected) return
     renderStats(stats)
-    renderRecentExpenses(stats.allItems.slice(0, 6), user, container)
+    renderRecentExpenses(stats.allItems.slice(0, 6))
 
-    let activeChartType = 'expense'
     renderDonutChart(stats.expenseByCategory, stats.totalExpense, 'expense')
 
     const btnExp = document.getElementById('chart-toggle-expense')
@@ -96,13 +118,11 @@ export async function renderHome(container, user) {
 
     if (btnExp && btnInc) {
       btnExp.addEventListener('click', () => {
-        activeChartType = 'expense'
         btnExp.className = 'btn btn-primary btn-sm'
         btnInc.className = 'btn btn-secondary btn-sm'
         renderDonutChart(stats.expenseByCategory, stats.totalExpense, 'expense')
       })
       btnInc.addEventListener('click', () => {
-        activeChartType = 'income'
         btnExp.className = 'btn btn-secondary btn-sm'
         btnInc.className = 'btn btn-teal btn-sm'
         renderDonutChart(stats.incomeByCategory, stats.totalIncome, 'income')
@@ -110,17 +130,25 @@ export async function renderHome(container, user) {
     }
   } catch (err) {
     console.error('Dashboard error:', err)
+    if (!page.isConnected) return
+    page.querySelector('#home-balance-amount').textContent = 'Indisponible'
+    page.querySelector('#home-balance-amount').removeAttribute('aria-label')
+    page.querySelector('#stats-grid-container').innerHTML =
+      '<p class="home-alert" role="status">Impossible de charger le récapitulatif du mois.</p>'
+    page.querySelector('.dashboard-grid').hidden = true
   }
 }
 
 function renderStats(stats) {
   const balanceColor = stats.netBalance >= 0 ? 'var(--accent-secondary)' : 'var(--accent-danger)'
   const balanceSign = stats.netBalance > 0 ? '+' : ''
+  const balance = document.getElementById('home-balance-amount')
+  balance.textContent = balanceSign + formatCurrency(stats.netBalance)
+  balance.style.color = balanceColor
+  balance.removeAttribute('aria-label')
 
   document.getElementById('stats-grid-container').innerHTML = `
-    <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px;">
-      <!-- Ligne 1 : Synthèse du mois -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+    <div class="stats-grid">
         <div class="stat-card" style="--card-accent: var(--accent-secondary)">
           <div class="stat-card-label">Revenus ce mois</div>
           <div class="stat-card-value" style="color: var(--accent-secondary)">+${formatCurrency(stats.totalIncome)}</div>
@@ -131,17 +159,6 @@ function renderStats(stats) {
           <div class="stat-card-value" style="color: var(--accent-danger)">-${formatCurrency(stats.totalExpense)}</div>
           <div class="stat-card-sub">${stats.expenses.length} transaction${stats.expenses.length > 1 ? 's' : ''}</div>
         </div>
-        <div class="stat-card" style="--card-accent: ${balanceColor}">
-          <div class="stat-card-label">Solde net</div>
-          <div class="stat-card-value" style="color: ${balanceColor}">
-            ${balanceSign}${formatCurrency(stats.netBalance)}
-          </div>
-          <div class="stat-card-sub">${stats.netBalance >= 0 ? 'Capacité d\'épargne' : 'Déficit ce mois'}</div>
-        </div>
-      </div>
-
-      <!-- Ligne 2 : Opérations récurrentes -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
         <div class="stat-card" style="--card-accent: var(--accent-secondary)">
           <div class="stat-card-label">Revenus fixes</div>
           <div class="stat-card-value" style="color: var(--accent-secondary)">+${formatCurrency(stats.fixedIncome)}</div>
@@ -152,12 +169,11 @@ function renderStats(stats) {
           <div class="stat-card-value">${formatCurrency(stats.fixedExpenses)}</div>
           <div class="stat-card-sub">Prélèvements récurrents</div>
         </div>
-      </div>
     </div>
   `
 }
 
-function renderRecentExpenses(expenses, user, container) {
+function renderRecentExpenses(expenses) {
   const el = document.getElementById('recent-expenses')
   if (!el) return
 
@@ -182,11 +198,11 @@ function renderRecentExpenses(expenses, user, container) {
       return `
       <div class="expense-item" style="cursor: default;">
         <div class="expense-icon" style="background: ${cat.bg}; color: ${cat.color}">
-          ${itemEmoji}
+          ${escapeHTML(itemEmoji)}
         </div>
         <div class="expense-info">
           <div class="expense-desc" style="display: flex; align-items: center; gap: 6px;">
-            <span>${e.description}</span>
+            <span>${escapeHTML(e.description)}</span>
             ${e.is_recurring ? `<span style="font-size: 0.7rem; background: var(--bg-tertiary); border: 1px solid var(--border-color); padding: 1px 6px; border-radius: 4px; color: var(--accent-primary);">Fixe</span>` : ''}
           </div>
           <div class="expense-meta">
@@ -206,6 +222,7 @@ function renderDonutChart(byCategory, total, type = 'expense') {
   const canvas = document.getElementById('donut-chart')
   const legendEl = document.getElementById('donut-legend')
   if (!canvas) return
+  const revision = ++chartRevision
 
   if (chartInstance) {
     chartInstance.destroy()
@@ -231,6 +248,7 @@ function renderDonutChart(byCategory, total, type = 'expense') {
   canvas.style.display = 'block'
 
   import('chart.js').then(({ Chart, ArcElement, Tooltip, Legend, DoughnutController }) => {
+    if (revision !== chartRevision || !canvas.isConnected) return
     Chart.register(ArcElement, Tooltip, Legend, DoughnutController)
 
     const labels = entries.map(([id]) => {

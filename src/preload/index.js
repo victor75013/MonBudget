@@ -1,7 +1,14 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
-const api = {}
+const api = {
+  market: {
+    isConfigured: () => ipcRenderer.invoke('market:is-configured'),
+    saveKey: (key) => ipcRenderer.invoke('market:save-key', key),
+    search: (query) => ipcRenderer.invoke('market:search', query),
+    history: (instrument) => ipcRenderer.invoke('market:history', instrument)
+  }
+}
 
 if (process.contextIsolated) {
   try {

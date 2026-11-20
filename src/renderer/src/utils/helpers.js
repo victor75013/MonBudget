@@ -126,13 +126,18 @@ export function groupBy(arr, keyFn) {
 
 // ── Export CSV ──
 export function exportToCSV(expenses, currency = 'EUR') {
+  const csvText = (value) => {
+    const text = String(value || '')
+    const safe = /^[\s\uFEFF]*[=+@-]/.test(text) || /^[\t\r\n]/.test(text) ? "'" + text : text
+    return `"${safe.replaceAll('"', '""')}"`
+  }
   const header = ['Date', 'Description', 'Catégorie', 'Montant', 'Note']
   const rows = expenses.map((e) => [
     e.date,
-    `"${(e.description || '').replace(/"/g, '""')}"`,
+    csvText(e.description),
     getCategoryLabel(e.category),
     e.amount,
-    `"${(e.note || '').replace(/"/g, '""')}"`
+    csvText(e.note)
   ])
 
   const csv = [header, ...rows].map((r) => r.join(',')).join('\n')

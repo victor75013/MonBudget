@@ -2,9 +2,10 @@
 // MonBudget — Expenses Page (Dépenses)
 // ===========================
 
-import { EXPENSE_CATEGORIES, getCurrentMonthYear, formatMonthYear, formatCurrency, formatDate, detectEmoji } from '../utils/helpers.js'
+import { EXPENSE_CATEGORIES, getCurrentMonthYear, formatMonthYear, formatCurrency, formatDate, detectEmoji, escapeHTML } from '../utils/helpers.js'
 import { getExpenses } from '../api/supabase.js'
 import { showExpenseModal } from '../components/expense-modal.js'
+import { showBankImport } from '../components/bank-import.js'
 
 let currentFilters = {}
 
@@ -16,7 +17,10 @@ export async function renderExpenses(container, user) {
     <div class="page-container fade-in">
       <div class="expenses-toolbar">
         <h2>Mes dépenses</h2>
-        <button class="btn btn-primary" id="add-expense-page-btn">+ Nouvelle dépense</button>
+        <div class="finance-actions">
+          <button class="btn btn-secondary" id="bank-import-btn">Importer un relevé</button>
+          <button class="btn btn-primary" id="add-expense-page-btn">+ Nouvelle dépense</button>
+        </div>
       </div>
 
       <!-- Période et filtres -->
@@ -45,6 +49,10 @@ export async function renderExpenses(container, user) {
       </div>
     </div>
   `
+
+  document.getElementById('bank-import-btn').addEventListener('click', () => {
+    showBankImport(user, () => loadExpensesList(user))
+  })
 
   document.getElementById('add-expense-page-btn').addEventListener('click', () => {
     showExpenseModal({
@@ -168,7 +176,7 @@ function renderExpensesList(expenses, user, container) {
                 </div>
                 <div class="expense-info">
                   <div class="expense-desc" style="display: flex; align-items: center; gap: 6px;">
-                    <span>${e.description}</span>
+                    <span>${escapeHTML(e.description)}</span>
                     ${e.is_recurring ? `<span style="font-size: 0.7rem; background: var(--bg-tertiary); border: 1px solid var(--border-color); padding: 1px 6px; border-radius: 4px; color: var(--accent-primary);">Fixe</span>` : ''}
                   </div>
                   <div class="expense-meta">

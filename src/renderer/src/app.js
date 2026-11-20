@@ -18,6 +18,7 @@ import { renderExpenses } from './pages/expenses.js'
 import { renderIncomes } from './pages/incomes.js'
 import { renderBudgets } from './pages/budgets.js'
 import { renderStats } from './pages/stats.js'
+import { renderMarket } from './pages/market.js'
 import { renderProfile } from './pages/profile.js'
 
 // App state
@@ -79,6 +80,10 @@ async function init() {
     .on('/stats', async () => {
       updateActiveNav()
       await renderStats(contentContainer, currentUser)
+    })
+    .on('/market', () => {
+      updateActiveNav()
+      renderMarket(contentContainer, currentUser)
     })
     .on('/profile', async () => {
       updateActiveNav()

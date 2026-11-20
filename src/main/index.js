@@ -2,6 +2,7 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { autoUpdater } from 'electron-updater'
+import { registerMarketHandlers } from './market.js'
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -11,7 +12,7 @@ function createWindow() {
     minHeight: 600,
     show: false,
     autoHideMenuBar: true,
-    backgroundColor: '#0f1117',
+    backgroundColor: '#f7f7f1',
     title: 'MonBudget',
     icon: join(__dirname, '../../build/icon.png'),
     webPreferences: {
@@ -44,6 +45,7 @@ app.whenReady().then(() => {
   })
 
   ipcMain.on('ping', () => console.log('pong'))
+  registerMarketHandlers()
 
   createWindow()
 

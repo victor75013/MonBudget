@@ -13,7 +13,7 @@ export function showConfirmModal({ title, message, confirmText = 'Supprimer', on
     <div class="modal" style="max-width: 380px; text-align: center;">
       <div class="confirm-icon">⚠️</div>
       <div class="confirm-title">${title}</div>
-      <div class="confirm-text">${message}</div>
+      <div class="confirm-text"></div>
       <div class="confirm-actions">
         <button class="btn btn-secondary" id="confirm-cancel">Annuler</button>
         <button class="btn btn-danger" id="confirm-ok">${confirmText}</button>
@@ -21,6 +21,7 @@ export function showConfirmModal({ title, message, confirmText = 'Supprimer', on
     </div>
   `
 
+  overlay.querySelector('.confirm-text').textContent = message
   document.body.appendChild(overlay)
   requestAnimationFrame(() => overlay.classList.add('show'))
 

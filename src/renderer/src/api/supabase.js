@@ -130,6 +130,32 @@ export async function addExpense(expense) {
   return data
 }
 
+export async function importExpenses(expenses) {
+  const { error } = await supabase.from('expenses').insert(expenses)
+  if (error) throw error
+}
+
+async function collectExpensePages(query) {
+  const items = []
+  const size = 500
+  for (let offset = 0; ; offset += size) {
+    const { data, error } = await query.range(offset, offset + size - 1)
+    if (error) throw error
+    items.push(...data)
+    if (data.length < size) return items
+  }
+}
+
+export async function getImportCandidates(userId, from, through) {
+  const rows = await collectExpensePages(supabase.from('expenses')
+    .select('date,description,amount,type')
+    .eq('user_id', userId)
+    .gte('date', from)
+    .lte('date', through)
+    .order('id'))
+  return rows.map((entry) => ({ ...entry, type: entry.type || 'expense' }))
+}
+
 export async function updateExpense(id, updates) {
   const { data, error } = await supabase
     .from('expenses')
@@ -153,6 +179,7 @@ export async function getExpenses(userId, options = {}) {
     .eq('user_id', userId)
     .order('date', { ascending: false })
     .order('created_at', { ascending: false })
+    .order('id')
 
   if (options.category) {
     query = query.eq('category', options.category)
@@ -162,8 +189,7 @@ export async function getExpenses(userId, options = {}) {
     query = query.ilike('description', `%${options.search}%`)
   }
 
-  const { data, error } = await query
-  if (error) throw error
+  const data = await collectExpensePages(query)
 
   // Remplir les valeurs par défaut (si type est null en BDD, c'est 'expense')
   const rawItems = (data || []).map((e) => ({
@@ -244,12 +270,12 @@ export async function getExpenses(userId, options = {}) {
 }
 
 export async function getAllExpenses(userId) {
-  const { data, error } = await supabase
+  const data = await collectExpensePages(supabase
     .from('expenses')
     .select('*')
     .eq('user_id', userId)
     .order('date', { ascending: false })
-  if (error) throw error
+    .order('id'))
   return (data || []).map((e) => ({
     ...e,
     type: e.type || 'expense',

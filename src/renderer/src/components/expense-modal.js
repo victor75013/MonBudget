@@ -75,7 +75,7 @@ export function showExpenseModal({ user, expense = null, defaultType = 'expense'
             ${expense?.icon || detectEmoji(expense?.description, expense?.category)}
           </button>
           <input class="form-input" type="text" id="exp-desc" placeholder="Ex: Électricité, Loyer, Courses, Salaire"
-            value="${expense ? escapeHTML(expense.description) : ''}" required style="flex: 1;" />
+            value="${expense ? escapeHTML(expense.description).replaceAll('"', '&quot;') : ''}" required style="flex: 1;" />
         </div>
         <input type="hidden" id="exp-icon" value="${expense?.icon || ''}" />
         <div id="emoji-picker-container" style="display: none; margin-top: 8px; padding: 10px; background: var(--bg-tertiary); border-radius: 8px; border: 1px solid var(--border-color); grid-template-columns: repeat(8, 1fr); gap: 6px; text-align: center; font-size: 1.2rem;">
